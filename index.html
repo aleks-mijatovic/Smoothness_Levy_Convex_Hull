@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<!-- Adapted from jorgeignaciogc/CornerlessConvexHull under the MIT License; see LICENSE. -->
+<!-- Adapted from jorgeignaciogc/CornerlessConvexHull; distributed under the MIT License in LICENSE. --><html lang="en"><head><meta charset="UTF-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Corners of the Convex Hull of Lévy Processes - Interactive Presentation</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script>window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    options: {
+        // Process both the restored MathML and any remaining TeX source.
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+};</script><script async="" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        h1, h2, h3, h4, .serif {
+            font-family: 'Merriweather', serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 45vh;
+            max-height: 500px;
+            min-height: 350px;
+            background: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1rem;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 50vh;
+                max-height: 400px;
+            }
+        }
+
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 4px; }
+
+        .nav-link.active {
+            background-color: #1e293b;
+            border-left: 4px solid #4f46e5;
+            color: white;
+        }
+        
+        .math-box {
+            background-color: #f1f5f9;
+            border-left: 4px solid #94a3b8;
+            padding: 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            left: -7px;
+            top: 6px;
+            border: 3px solid white;
+        }
+
+        /* Responsive Font Scaling for PC */
+        @media (min-width: 1024px) {
+            html { font-size: 17px; }
+        }
+        @media (min-width: 1536px) {
+            html { font-size: 18px; }
+        }
+
+        /* Sidebar Collapse Animation for Desktop */
+        .sidebar-collapsed {
+            margin-left: -18rem;
+            transform: translateX(-100%) !important;
+        }
+        @media (max-width: 767px) {
+            .sidebar-collapsed {
+                margin-left: 0;
+            }
+        }
+    </style></head>
+<body class="flex flex-col md:flex-row min-h-screen">
+<div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+<h1 class="text-lg font-bold serif truncate">Corners of the Convex Hull</h1>
+<button class="text-2xl focus:outline-none px-2 py-1" id="mobile-menu-btn">
+<i class="fa-solid fa-bars"></i>
+</button>
+</div>
+<aside class="fixed md:sticky top-0 left-0 h-screen w-[80vw] md:w-72 max-w-[18rem] bg-slate-900 text-slate-300 z-50 md:z-40 sidebar-scroll overflow-y-auto shrink-0 shadow-2xl transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 flex flex-col" id="sidebar">
+<div class="p-6 pb-4 relative">
+<button class="md:hidden absolute top-6 right-6 text-slate-400 hover:text-white text-xl focus:outline-none" id="close-sidebar-btn">
+<i class="fa-solid fa-xmark"></i>
+</button>
+<h1 class="text-xl font-bold text-white serif leading-tight mb-3 pr-6">Corners of the Convex Hull of Lévy Processes</h1>
+<p class="text-xs text-slate-400 font-semibold tracking-wide uppercase">Interactive Presentation</p>
+<p class="text-xs text-slate-500 mt-2">Chaumont, González Cázares, Mijatović</p>
+</div>
+<nav class="flex-1 px-4 pb-6 space-y-1 mt-4" id="nav-menu">
+<a class="nav-link block px-4 py-3 rounded-md hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium active" href="#intro"><i class="fa-solid fa-clock-rotate-left w-6 text-indigo-400"></i> History &amp; Context</a>
+<a class="nav-link block px-4 py-3 rounded-md hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium" href="#geometry"><i class="fa-solid fa-draw-polygon w-6 text-teal-400"></i> Convex Geometry Recap</a>
+<a class="nav-link block px-4 py-3 rounded-md hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium" href="#results"><i class="fa-solid fa-certificate w-6 text-amber-400"></i> Main Results</a>
+<a class="nav-link block px-4 py-3 rounded-md hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium" href="#methodology"><i class="fa-solid fa-compress w-6 text-rose-400"></i> The Subsampling Approach</a>
+<a class="nav-link block px-4 py-3 rounded-md hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium" href="#machinery"><i class="fa-solid fa-gears w-6 text-slate-400"></i> Fluctuation Machinery</a>
+</nav>
+<div class="p-6 mt-auto hidden md:block border-t border-slate-800">
+<p class="text-xs text-slate-400 mb-3 text-center">Scan for interactive version</p>
+<div class="bg-white p-2 rounded-lg mx-auto w-fit" id="qrcode-sidebar"></div>
+</div>
+</aside>
+<main class="flex-1 w-full max-w-5xl mx-auto p-6 md:p-10 lg:p-14 overflow-x-hidden">
+<header class="mb-16 border-b border-slate-200 pb-8">
+<h1 class="text-4xl md:text-5xl font-bold text-slate-900 serif leading-tight mb-4">Corners and Smoothness of the Convex Hull of Lévy Processes</h1>
+<p class="text-lg text-slate-600"><b>Jorge González Cázares</b> (<em>IIMAS-UNAM</em>)<br/><br/>Based on joint work with <br/><b>Loïc Chaumont</b> (<em>Université Angers</em>) and <br/><b>Aleksandar Mijatović</b> (<em>University of Warwick</em>).<br/><br/><small>Research at the intersection of probability, differential geometry and convex analysis</small>.</p></header>
+<section class="mb-24 scroll-mt-24" id="intro">
+<div class="mb-8">
+<span class="text-indigo-600 font-bold tracking-wider uppercase text-sm">Part 1</span>
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif">The History of Smooth Random Convex Hulls</h2>
+<p class="text-base text-slate-600 leading-relaxed">
+                    Historical context behind geometric regularity in stochastic processes. We outline the decades-long pursuit to determine whether the boundaries of random paths (like Brownian motion and Lévy processes) are smooth or if some bits of their paths remain in sharp volumes like corners and thorns.
+                </p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+<h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-2"><i class="fa-solid fa-bezier-curve text-indigo-600 mr-2"></i> Smoothness Timeline</h3>
+<ul class="space-y-5 relative border-l-2 border-slate-200 ml-3">
+<li class="pl-6 relative">
+<div class="timeline-dot bg-indigo-500"></div>
+<p class="font-bold text-slate-800 text-sm">Paul Lévy (1948)</p>
+<p class="text-sm text-slate-600 mt-1">Observed smoothness for planar Brownian motion.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-slate-400"></div>
+<p class="font-bold text-slate-800 text-sm">El Bachir (1983)</p>
+<p class="text-sm text-slate-600 mt-1">Analysed convex hulls of Brownian motion.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-slate-400"></div>
+<p class="font-bold text-slate-800 text-sm">Cranston, Hsu &amp; March (1989)</p>
+<p class="text-sm text-slate-600 mt-1">Rigorously established smoothness of <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>∂</mi><mi>H</mi></math> for planar Brownian motion.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-slate-400"></div>
+<p class="font-bold text-slate-800 text-sm">Alexander &amp; Eldan (2019)</p>
+<p class="text-sm text-slate-600 mt-1">Extended smoothness of Brownian motion to arbitrary dimension <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>⩾</mo><mn>2</mn></math>.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-indigo-600"></div>
+<p class="font-bold text-slate-800 text-sm">González Cázares, Kramer-Bang &amp; Mijatović (2024)</p>
+<p class="text-sm text-slate-600 mt-1">Characterised the class of 1D Lévy processes with smooth time-space convex hulls.</p>
+</li>
+</ul>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+<h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-2"><i class="fa-solid fa-exclamation-triangle text-rose-600 mr-2"></i> Singularities Timeline</h3>
+<ul class="space-y-5 relative border-l-2 border-slate-200 ml-3">
+<li class="pl-6 relative">
+<div class="timeline-dot bg-rose-400"></div>
+<p class="font-bold text-slate-800 text-sm">Burdzy (1985), Evans (1985) &amp; Shimura (1985)</p>
+<p class="text-sm text-slate-600 mt-1">Studied Brownian cone points and thorns.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-slate-400"></div>
+<p class="font-bold text-slate-800 text-sm">Burdzy &amp; Kulczycki (2003)</p>
+<p class="text-sm text-slate-600 mt-1">Proved isotropic stable processes have one-sided thorn points.</p>
+</li>
+<li class="pl-6 relative">
+<div class="timeline-dot bg-slate-400"></div>
+<p class="font-bold text-slate-800 text-sm">Alexander &amp; Eldan (2019)</p>
+<p class="text-sm text-slate-600 mt-1">Proved Brownian motion does not possess two-sided cone points in arbitrary dimensions.</p>
+</li>
+</ul>
+<div class="mt-8 p-4 bg-rose-50 rounded-lg border border-rose-100 shadow-sm">
+<p class="font-bold text-rose-900 text-sm"><i class="fa-solid fa-circle-question mr-1"></i> The Open Question:</p>
+<p class="text-sm text-rose-800 mt-2 leading-relaxed">Does boundary smoothness exist beyond Brownian motion? What is the generic behaviour of multidimensional Lévy processes?</p>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-24 scroll-mt-24" id="geometry">
+<div class="mb-8">
+<span class="text-teal-600 font-bold tracking-wider uppercase text-sm">Part 2</span>
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif">Boundary Parametrisation &amp; Local Geometry</h2>
+<p class="text-base text-slate-600 leading-relaxed">
+                    What is the subject of study and what does it look like? 
+                </p>
+</div>
+<div class="math-box shadow-sm mb-8">
+<p class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-cube text-slate-500 mr-2"></i> The Closed Convex Hull in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math></p>
+<p class="text-base leading-relaxed">Let <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>=</mo><mo stretchy="false">(</mo><msub><mi>X</mi><mi>t</mi></msub><msub><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><mi>t</mi><mo>⩾</mo><mn>0</mn></mrow></msub></math> be a Lévy process in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math>, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>⩾</mo><mn>2</mn></math>, and fix <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi><mo>∈</mo><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">]</mo></math>. We study the closed convex hull of its path:</p>
+<p class="text-center text-lg my-4 overflow-x-auto"><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mi>H</mi><mo>:=</mo><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">cl</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mo stretchy="false">(</mo><mtext>Conv</mtext><mo fence="false" stretchy="false">{</mo><msub><mi>X</mi><mi>t</mi></msub><mo>:</mo><mi>t</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mi>T</mi><mo stretchy="false">)</mo><mo fence="false" stretchy="false">}</mo><mo stretchy="false">)</mo></math></p>
+</div>
+<div class="mb-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+<div>
+<h3 class="text-lg font-bold text-slate-800 mb-1"><i class="fa-solid fa-cubes text-slate-500 mr-2"></i> 3D Lévy Process Path &amp; Convex Hull</h3>
+<p class="text-sm text-slate-500">3D random walk (discretisation of a Lévy process) and its convex hull.</p>
+</div>
+<button class="mt-4 md:mt-0 px-3 py-2 bg-slate-600 text-white rounded shadow hover:bg-slate-700 transition font-medium text-sm focus:outline-none whitespace-nowrap" id="btn-regen-3d-hull">
+<i class="fa-solid fa-rotate mr-1"></i> New 3D Path
+                    </button>
+</div>
+<div class="w-full rounded-lg border border-slate-300 overflow-hidden h-[450px] relative">
+<div class="w-full h-full cursor-move" id="plotly-general-3d-hull"></div>
+</div>
+</div>
+<div class="mb-10 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-100 pb-4">
+<div>
+<h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-chart-line text-teal-500 mr-2"></i> 2D Path &amp; Convex Hull</h3>
+<p class="text-sm text-slate-500 mt-1">Lévy path, its convex hull <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>∂</mi><mi>H</mi></math> and supporting hyperplanes.</p>
+</div>
+<button class="mt-4 md:mt-0 px-4 py-2 bg-teal-600 text-white rounded shadow hover:bg-teal-700 transition font-medium text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 whitespace-nowrap" id="btn-generate-hull">
+<i class="fa-solid fa-rotate mr-1"></i> Generate New Path
+                    </button>
+</div>
+<div class="chart-container">
+<canvas id="hullChart"></canvas>
+</div>
+<div class="mt-4 text-xs text-center text-slate-400"><i class="fa-solid fa-circle-info"></i> The gray points represent the path of <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mi>t</mi></msub></math>. The teal perimeter represents the boundary <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>∂</mi><mi>H</mi></math>.</div>
+</div>
+<div class="mb-10 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<h3 class="text-xl font-bold text-slate-800 mb-4 serif border-b pb-2"><i class="fa-solid fa-wave-square text-indigo-500 mr-2"></i> How can a piecewise linear function be smooth?</h3>
+<div class="space-y-4 text-base text-slate-700 mb-6">
+<p>It essentially points to a <strong>fractal-like structure</strong>: no two faces are ever neighbours (or any point on their shared boundary would be singular).</p>
+<p>In 2D, you should think of the integral of a random Cantor function (Devil's staircase). In 3D (after turning it into a planar graph), think of <strong>Sierpinski's Gasket</strong>, for instance.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="rounded-lg border border-slate-200 p-2 bg-slate-50">
+<h4 class="text-center font-semibold text-slate-700 mb-2 text-sm">2D: Cantor Function &amp; Its Integral</h4>
+<div class="w-full h-[300px]" id="plotly-cantor"></div>
+</div>
+<div class="rounded-lg border border-slate-200 p-2 bg-slate-50">
+<h4 class="text-center font-semibold text-slate-700 mb-2 text-sm">Sierpinski Gasket (3D Boundary Face Rearrangement)</h4>
+<div class="w-full h-[300px]" id="plotly-sierpinski"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+<div class="flex flex-col col-span-3">
+<h3 class="text-xl font-bold text-slate-800 mb-4 serif border-b pb-2">Supporting Hyperplanes &amp; Normal Cones</h3>
+<div class="flex-1 space-y-4 text-base text-slate-700">
+<p>Every <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi><mo>∈</mo><mi>∂</mi><mi>H</mi></math> has an inward-pointing <strong>normal cone</strong>:</p>
+<div class="bg-slate-50 p-3 rounded border border-slate-200 overflow-x-auto">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>:=</mo><mo fence="false" stretchy="false">{</mo><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup><mo>:</mo><mi>H</mi><mo>⊂</mo><mi>x</mi><mo>+</mo><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">cl</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub><mo fence="false" stretchy="false">}</mo><mo>∪</mo><mo fence="false" stretchy="false">{</mo><mn>0</mn><mo fence="false" stretchy="false">}</mo></math>
+</div>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub><mo>:=</mo><mo fence="false" stretchy="false">{</mo><mi>y</mi><mo>∈</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup><mo>:</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>y</mi><mo fence="false" stretchy="false">⟩</mo><mo>&gt;</mo><mn>0</mn><mo fence="false" stretchy="false">}</mo></math> is the positive half-space with direction <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup><mo>:=</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup><mo>∖</mo><mo fence="false" stretchy="false">{</mo><mn>0</mn><mo fence="false" stretchy="false">}</mo></math>. Similarly, each <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></math> <strong>exposes</strong> a <strong>face</strong>:</p>
+<div class="bg-slate-50 p-3 rounded border border-slate-200 overflow-x-auto text-center">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">F</mi></mrow><mi>θ</mi></msub><mo>:=</mo><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">{</mo></mrow><mi>x</mi><mo>∈</mo><mi>H</mi><mo>:</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>x</mi><mo fence="false" stretchy="false">⟩</mo><mo>=</mo><msub><mi>I</mi><mi>θ</mi></msub><mo>:=</mo><munder><mo data-mjx-texclass="OP" movablelimits="true">inf</mo><mrow data-mjx-texclass="ORD"><mi>y</mi><mo>∈</mo><mi>H</mi></mrow></munder><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>y</mi><mo fence="false" stretchy="false">⟩</mo><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">}</mo></mrow></math>
+</div>
+<p>Consider the last time the directional infimum (or exposed face) is approached:</p>
+<div class="bg-slate-50 p-3 rounded border border-slate-200 overflow-x-auto text-center">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>η</mi><mi>θ</mi></msub><mo>:=</mo><mo data-mjx-texclass="OP" movablelimits="true">sup</mo><mo fence="false" stretchy="false">{</mo><mi>t</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mi>T</mi><mo stretchy="false">)</mo><mo>:</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mo>∧</mo><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><mi>t</mi><mo>−</mo></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>=</mo><msub><mi>I</mi><mi>θ</mi></msub><mo fence="false" stretchy="false">}</mo></math>
+</div>
+<p>We select a point in the exposed face by tracking the position of <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> at this time:</p>
+<div class="bg-slate-50 p-3 rounded border border-slate-200 overflow-x-auto text-center">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo>:=</mo><mrow data-mjx-texclass="INNER"><mo data-mjx-texclass="OPEN">{</mo><mtable columnalign="left left" columnspacing="1em" rowspacing=".2em"><mtr><mtd><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub></mrow></msub><mo>,</mo></mtd><mtd><mtext>if </mtext><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>=</mo><msub><mi>I</mi><mi>θ</mi></msub><mo>,</mo></mtd></mtr><mtr><mtd><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>−</mo></mrow></msub><mo>,</mo></mtd><mtd><mtext>if </mtext><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>−</mo></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>=</mo><msub><mi>I</mi><mi>θ</mi></msub><mo>.</mo></mtd></mtr></mtable><mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo></mrow></math>
+</div>
+</div>
+</div>
+<div class="flex flex-col col-span-2">
+<div class="bg-slate-800 text-white p-6 rounded-xl shadow-lg h-full">
+<h3 class="text-lg font-bold mb-5 serif text-teal-300 border-b border-slate-600 pb-2"><i class="fa-solid fa-shapes mr-2"></i> Classifying Singularities</h3>
+<p class="mb-6 text-slate-300 text-base">The geometry at <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi><mo>∈</mo><mi>∂</mi><mi>H</mi></math> is classified by the dimension of its normal cone, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></math>:</p>
+<ul class="space-y-5">
+<li class="flex items-start">
+<i class="fa-solid fa-circle-check text-teal-400 mt-1 mr-4 text-lg"></i>
+<div>
+<strong class="text-white text-base">Smooth Point</strong><br/>
+<span class="text-slate-300 text-base block mt-1 bg-slate-900/50 p-2 rounded"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn></math>. The normal cone is a single 1D ray.</span>
+</div>
+</li>
+<li class="flex items-start">
+<i class="fa-solid fa-ruler-combined text-amber-400 mt-1 mr-4 text-lg"></i>
+<div>
+<strong class="text-white text-base">Edge Point of Degree <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi></math></strong><br/>
+<span class="text-slate-300 text-base block mt-1 bg-slate-900/50 p-2 rounded"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mi>d</mi><mo>−</mo><mi>r</mi></math>.</span>
+</div>
+</li>
+<li class="flex items-start">
+<i class="fa-solid fa-exclamation-triangle text-rose-400 mt-1 mr-4 text-lg"></i>
+<div>
+<strong class="text-white text-base">Corner</strong><br/>
+<span class="text-slate-300 text-base block mt-1 bg-slate-900/50 p-2 rounded"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mi>d</mi></math> (i.e., <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>r</mi><mo>=</mo><mn>0</mn></math>). The most extreme singularity, where the normal cone constitutes a full <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi></math>-dimensional volume.</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-24 scroll-mt-24" id="results">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<h3 class="text-lg font-bold text-slate-800 mb-3"><i class="fa-solid fa-cube text-teal-500 mr-2"></i> Corner Singularity</h3>
+<p class="text-sm text-slate-500 mb-4">3D plot showing a corner where <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mn>3</mn></math> and an edge with <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mn>2</mn></math>.</p>
+<div class="w-full rounded-lg border border-slate-300 overflow-hidden h-[400px]">
+<div class="w-full h-full" id="plotly-corner-body"></div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<h3 class="text-lg font-bold text-slate-800 mb-3"><i class="fa-solid fa-cube text-amber-500 mr-2"></i> Singular Line</h3>
+<p class="text-sm text-slate-500 mb-4">3D plot showing a singular line where <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mn>2</mn></math> and no corners.</p>
+<div class="w-full rounded-lg border border-slate-300 overflow-hidden h-[400px]">
+<div class="w-full h-full" id="plotly-singular-body"></div>
+</div>
+</div>
+</div>
+<div class="mb-8 mt-10">
+<span class="text-amber-500 font-bold tracking-wider uppercase text-sm">Part 3</span>
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif">Main Global Results</h2>
+<p class="text-base text-slate-600 leading-relaxed">
+                    Main theorems established in this project. The central breakthrough is identifying a broad class of processes <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> whose convex hulls lack corners a.s., conditions for local smoothness a.s. and exploring the geometric limitations when analysing dimensions <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>⩾</mo><mn>3</mn></math>.
+                </p>
+</div>
+<div class="bg-white border-l-4 border-amber-500 p-6 rounded-r-xl shadow-md mb-8">
+<h3 class="text-xl font-bold text-slate-800 mb-3 serif"><i class="fa-solid fa-crown text-amber-500 mr-2"></i> Theorem (Chaumont, GC, Mijatović, 2026+).</h3>
+<p class="text-base text-slate-700 font-medium mb-4 bg-amber-50 p-3 rounded">For any <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>∈</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>∂</mi><mi>H</mi></math> has no corners a.s. (In dimension <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>=</mo><mn>2</mn></math>, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>∂</mi><mi>H</mi></math> is smooth a.s.)</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base">
+<div class="bg-slate-50 p-4 rounded border border-slate-200">
+<strong class="text-slate-800">Corollary:</strong> This property is preserved under locally diffeomorphic transformations (full rank Jacobian).
+                    </div>
+<div class="bg-slate-50 p-4 rounded border border-slate-200">
+<strong class="text-slate-800">Corollary:</strong> Lévy processes in <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> a.s. do not possess two-sided corner points.
+                    </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-10">
+<div class="lg:col-span-3">
+<div class="math-box h-full m-0 flex flex-col justify-center">
+<p class="font-bold text-slate-800 mb-3 border-b border-slate-300 pb-2">Defining the Regularity Classes <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow><mo data-mjx-alternate="1">′</mo></msup></math></p>
+<p class="text-slate-700 text-base mb-3">Define the class <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> of Lévy processes <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> with: 
+                            <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><munder><mo data-mjx-texclass="OP" movablelimits="true">sup</mo><mrow data-mjx-texclass="ORD"><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></mrow></munder><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><msub><mi>N</mi><mi>θ</mi></msub><mo>&lt;</mo><mi>d</mi><mo>,</mo></math> 
+                            where the <b>deterministic cone</b> <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>N</mi><mi>θ</mi></msub></math> is defined as the set of all <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></math> such that 
+                            <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mo data-mjx-texclass="OP">∫</mo><mn>0</mn><mn>1</mn></msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mo stretchy="false">(</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo fence="false" stretchy="false">⟨</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo>&lt;</mo><mn>0</mn><mo stretchy="false">)</mo><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>&lt;</mo><mi mathvariant="normal">∞</mi><mo>.</mo></math> 
+                            Define the class <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow><mo data-mjx-alternate="1">′</mo></msup><mo>⊂</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> of Lévy processes with 
+                            <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><munder><mo data-mjx-texclass="OP" movablelimits="true">sup</mo><mrow data-mjx-texclass="ORD"><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></mrow></munder><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><msub><mi>M</mi><mi>θ</mi></msub><mo>&lt;</mo><mi>d</mi><mo>,</mo></math> 
+                            where the <b>deterministic cone</b> <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>M</mi><mi>θ</mi></msub><mo>⊃</mo><msub><mi>N</mi><mi>θ</mi></msub></math> is defined as set of all <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></math> such that
+                            <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><munder><mo data-mjx-texclass="OP" movablelimits="true">lim inf</mo><mrow data-mjx-texclass="ORD"><mi>t</mi><mo stretchy="false">↓</mo><mn>0</mn></mrow></munder><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mo stretchy="false">(</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo fence="false" stretchy="false">⟨</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo>&lt;</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><mn>0.</mn></math></p>
+</div>
+</div>
+<div class="lg:col-span-2">
+<div class="bg-slate-100 p-6 rounded-xl border border-slate-200 flex flex-col justify-center">
+<h4 class="font-bold text-slate-800 mb-4 uppercase tracking-wide text-xs"><i class="fa-solid fa-list-check text-slate-500 mr-1"></i> Prominent Members of <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow><mo data-mjx-alternate="1">′</mo></msup><mo>⊂</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math></h4>
+<ul class="list-disc pl-5 space-y-3 text-sm text-slate-700 marker:text-amber-500">
+<li class="pl-1"><math xmlns="http://www.w3.org/1998/Math/MathML"><mi>α</mi></math>-stable processes with full support (for <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>α</mi><mo>∈</mo><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mn>2</mn><mo stretchy="false">)</mo></math>).</li>
+<li class="pl-1">Processes in the small-time domain of attraction of such an <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>α</mi></math>-stable process.</li>
+<li class="pl-1">Isotropic processes of infinite activity.</li>
+<li class="pl-1">Processes in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow><mo data-mjx-alternate="1">′</mo></msup></math> subordinated by an independent subordinator <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>∘</mo><mi mathvariant="normal">Γ</mi></math>.</li>
+<li class="pl-1">Processes in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow><mo data-mjx-alternate="1">′</mo></msup></math> with arbitrary modifications to its Lévy measure outside a neighbourhood of the origin. <br/> <em>(<math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">D</mi></mrow></math> also has this invariance.)</em></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="mb-8">
+<h3 class="text-xl font-bold text-slate-800 mb-4 serif">Local Differentiability &amp; Bounding the Normal Cone</h3>
+<div class="bg-white border border-slate-200 p-5 rounded-lg shadow-sm">
+<p class="text-slate-800 text-base mb-3"><b>Theorem (Rogozin for cones around extrema; Chaumont, GC, Mijatović, 2026+).</b><br/> Fix <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></math> with <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>I</mi><mi>θ</mi></msub><mo>&gt;</mo><mo>−</mo><mi mathvariant="normal">∞</mi></math> a.s.</p>
+<ol class="list-decimal pl-5 space-y-2 text-base text-slate-700">
+<li>If <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>N</mi><mi>θ</mi></msub><mo>≠</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math>, then <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">F</mi></mrow><mi>θ</mi></msub></math> is a.s. a singleton <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">{</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo fence="false" stretchy="false">}</mo></math>.</li>
+<li>Fix <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>k</mi><mo>∈</mo><mo fence="false" stretchy="false">{</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mi>d</mi><mo>−</mo><mn>1</mn><mo fence="false" stretchy="false">}</mo></math>. Let <math xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mi>N</mi><mrow data-mjx-texclass="ORD"><mi mathvariant="bold-italic">θ</mi></mrow><mi>k</mi></msubsup></math> denote the set of all <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">[</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>θ</mi><mi>k</mi></msub><mo stretchy="false">]</mo><mo>∈</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mrow data-mjx-texclass="ORD"><mi>d</mi><mo>×</mo><mi>k</mi></mrow></msup></math> such that 
+                            <div class="bg-slate-50 p-2 rounded border border-slate-200 overflow-x-auto text-center my-2">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mo data-mjx-texclass="OP">∫</mo><mn>0</mn><mn>1</mn></msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">(</mo></mrow><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">[</mo></mrow><mrow data-mjx-texclass="ORD"><mstyle mathcolor="royalblue"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msub><mo>∩</mo><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mi>i</mi></msub></mrow></msub></mstyle></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">]</mo></mrow><mo>∪</mo><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">[</mo></mrow><mrow data-mjx-texclass="ORD"><mstyle mathcolor="red"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>θ</mi></mrow></msub><mo>∩</mo><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mi>i</mi></msub></mrow></msub></mstyle></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">]</mo></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">)</mo></mrow><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>&lt;</mo><mi mathvariant="normal">∞</mi><mo>.</mo></math>
+</div>
+                            If <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">[</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>θ</mi><mi>k</mi></msub><mo stretchy="false">]</mo><mo>∉</mo><msubsup><mi>N</mi><mrow data-mjx-texclass="ORD"><mi mathvariant="bold-italic">θ</mi></mrow><mi>k</mi></msubsup></math>, then <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>±</mo><mo>⋅</mo></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mi>i</mi></msub></mrow></msub></math> a.s. (i.e., either the <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mstyle mathcolor="red"><mtext>pre-</mtext><msub><mi>η</mi><mi>θ</mi></msub></mstyle></mrow></math> or the <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mstyle mathcolor="royalblue"><mtext>post-</mtext><msub><mi>η</mi><mi>θ</mi></msub></mstyle></mrow></math> process immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mi>i</mi></msub></mrow></msub></math>). In particular, <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo stretchy="false">)</mo><mo>∩</mo><mtext>cone</mtext><mo stretchy="false">(</mo><mo fence="false" stretchy="false">{</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>θ</mi><mi>k</mi></msub><mo fence="false" stretchy="false">}</mo><mo stretchy="false">)</mo><mo>=</mo><mo fence="false" stretchy="false">{</mo><mn>0</mn><mo fence="false" stretchy="false">}</mo></math> a.s.
+                        </li>
+<li>If <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mo stretchy="false">(</mo><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">span</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><msubsup><mi>N</mi><mi>θ</mi><mi>k</mi></msubsup><mo stretchy="false">)</mo><mo>&lt;</mo><mi>k</mi><mi>d</mi></math>, then <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>dim</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo stretchy="false">)</mo><mo>⩽</mo><mi>d</mi><mo>−</mo><mi>k</mi></math> a.s.</li>
+</ol>
+</div>
+</div>
+<div class="p-6 border border-teal-200 bg-teal-50/50 rounded-xl mb-8">
+<h3 class="text-lg font-bold text-teal-900 mb-4"><i class="fa-solid fa-check-circle mr-2"></i> Resolving the Global Problem</h3>
+<div class="space-y-4 text-base text-slate-700">
+<p><strong class="text-teal-800">Absence of Corners (<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>k</mi><mo>=</mo><mn>1</mn></math>):</strong> How does the local theorem prove our first main result on corners? When <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>k</mi><mo>=</mo><mn>1</mn></math> (i.e., the case of corners), we may pick a countable dense collection of directions <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi></math> and note that, if a corner existed, its normal cone would have non-empty interior, thus intersecting the chosen countable dense set, which yields a contradiction.</p>
+<p><strong class="text-teal-800">The General Resolution via Grassmannians:</strong> To forbid higher-dimensional singularities globally, we must prohibit non-trivial intersections with higher-dimensional cones, requiring algebraic topological arguments over Grassmannians <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">Gr</mi></mrow><mo stretchy="false">(</mo><mi>k</mi><mo>,</mo><mi>d</mi><mo stretchy="false">)</mo></math>. More precisely, such arguments show that controlling a.s. non-intersections of <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo stretchy="false">)</mo></math> with appropriate cones, applied over a suitable countable set, implies the a.s. bound on the dimension <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">dim</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo stretchy="false">)</mo></math>.</p>
+<p><strong class="text-teal-800">What remains to prove:</strong> Thus, to establish our final goal (bounding the dimension <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">dim</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">N</mi></mrow><mo stretchy="false">(</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mo stretchy="false">)</mo></math> as well as our main theorem), it remains to establish the regularity of cones for the pre-<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>η</mi><mi>θ</mi></msub></math> and post-<math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>η</mi><mi>θ</mi></msub></math> processes.</p>
+</div>
+</div>
+<div class="p-6 border border-rose-200 bg-rose-50/50 rounded-xl">
+<h3 class="text-lg font-bold text-rose-900 mb-4"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Why <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>⩾</mo><mn>3</mn></math> is Fundamentally Harder</h3>
+<div class="space-y-4 text-base text-slate-700">
+<p><strong class="text-rose-800">Warning:</strong> The absence of singularities globally <em>cannot</em> be deduced purely from ensuring every <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math> is regular via countable deterministic directions.</p>
+<p><strong class="text-rose-800">The Geometric Obstruction:</strong> If we construct a convex body with at least one singular point that is not a corner, and apply an <em>absolutely continuous random rotation</em>, then with probability 1, no deterministic countable set of directions will ever expose the singular line.</p>
+<p><strong class="text-rose-800">The Probabilistic Hurdle in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math>:</strong> Even though we fixed the local problem (i.e., we can now give definitive conclusions), the a.s. global smoothness problem remains. This is a specific hurdle for probabilists since a.s. events can only be intersected countably many times to remain a.s., while other fields (like convex analysis) typically don't worry about such issues. If a surface is fixed, global smoothness is equivalent to local smoothness of every point. Adding "a.s." breaks this down, because countably many events may not induce global regularity if <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>d</mi><mo>⩾</mo><mn>3</mn></math>.</p>
+</div>
+</div>
+</section>
+<section class="mb-24 scroll-mt-24" id="methodology">
+<div class="mb-8">
+<span class="text-rose-500 font-bold tracking-wider uppercase text-sm">Part 4</span>
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif">The Subsampling Approach</h2>
+<p class="text-base text-slate-600 leading-relaxed">
+                    Core methodological trick used to bypass the intractability of conditioned processes. Subsampling the path at directional ladder times makes the geometric analysis mathematically viable.
+                </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+<div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+<h3 class="text-lg font-bold text-slate-800 mb-3 border-b pb-2"><i class="fa-solid fa-ban text-slate-400 mr-2"></i> The Intractability Problem</h3>
+<p class="text-slate-600 text-base mb-4">
+                        To determine if the process visits <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup></mrow></msub></math>, we must analyse the post-infimum process <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><mo>⋅</mo></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math>. This behaves like the process <em>conditioned to stay in a half-space</em> <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub></math>. While this can be analysed using Doob <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>h</mi></math>-transforms (e.g., Ivanovs and Thøstesen, 2022), the resulting laws are <strong>highly intractable</strong>. Extracting explicit 0-1 criteria from them is extremely difficult.
+                    </p>
+<h3 class="text-lg font-bold text-slate-800 mb-3 border-b pb-2 mt-6"><i class="fa-solid fa-wand-magic-sparkles text-rose-500 mr-2"></i> A Miraculous Simplification</h3>
+<p class="text-slate-600 text-base">
+                        Instead of analysing the full conditioned path, we <strong>subsample</strong> the process at times when it is "close" to the orthogonal plane <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>θ</mi><mo>⊥</mo></msup></math> anchored at the exposed point. We trade full path information for analytical tractability, projecting coordinate by coordinate.
+                    </p>
+</div>
+<div class="bg-slate-900 text-white border border-slate-800 p-6 rounded-xl shadow-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-slate-800 rounded-bl-full -z-10"></div>
+<h3 class="font-bold text-lg mb-4 text-rose-300 border-b border-slate-700 pb-2"><i class="fa-solid fa-arrows-split-up-and-left mr-2"></i> Geometric Separation</h3>
+<div class="space-y-4 text-base text-slate-300">
+<p>Under general conditions, a direction <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi></math> exposes a single point <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math>.</p>
+<p>To check if another vector <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup></math> exposes <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math>, we simply check if the path intersects the positive half-space <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup></mrow></msub></math> anchored at <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math>.</p>
+<p class="bg-slate-800/80 p-3 rounded border border-slate-700 font-medium text-rose-100">
+                            If the path immediately enters the intersection of <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>k</mi></math> half spaces <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mi>i</mi></msub></mrow></msub></math>, no positive combination <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">∑</mo><mrow data-mjx-texclass="ORD"><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><msub><mi>θ</mi><mi>i</mi></msub></math> of the normal vectors can expose <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math>.
+                        </p>
+<p>We forbid uncountably many directions from being in the normal cone using a single event.</p>
+</div>
+</div>
+</div>
+<div class="mb-10 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<h3 class="text-xl font-bold text-slate-800 mb-4 serif border-b pb-2"><i class="fa-solid fa-vector-square text-rose-500 mr-2"></i> Geometric Separation in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>3</mn></msup></math></h3>
+<p class="text-base text-slate-700 mb-6">If a point lies in <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub><mo>∩</mo><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>1</mn></msub></mrow></msub><mo>∩</mo><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>2</mn></msub></mrow></msub></math>, then for every positive combination <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup><mo>=</mo><msub><mi>λ</mi><mn>1</mn></msub><msub><mi>θ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>λ</mi><mn>2</mn></msub><msub><mi>θ</mi><mn>2</mn></msub></math> (with <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>λ</mi><mi>i</mi></msub><mo>&gt;</mo><mn>0</mn></math>), the point necessarily lies in <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup></mrow></msub></math>. Here we represent the wedge <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>1</mn></msub></mrow></msub><mo>∩</mo><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>2</mn></msub></mrow></msub></math> in <span class="font-bold text-green-600">green</span> and the bounding plane of the half-space <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msup><mi>θ</mi><mo data-mjx-alternate="1">′</mo></msup></mrow></msub></math> in <span class="font-bold text-rose-500">pink</span>. Notice how the pink boundary never crosses the interior of the green wedge.</p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="col-span-1 space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200 text-sm">
+<div>
+<p class="font-bold text-slate-800 mb-1">Direction <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>=</mo><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false">)</mo></math></p>
+<p class="text-xs text-slate-500">Fixed direction exposing the face.</p>
+</div>
+<div>
+<p class="font-bold text-slate-800 mb-1">Direction <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>θ</mi><mn>1</mn></msub></math> (defines <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>1</mn></msub></mrow></msub></math>)</p>
+<div class="flex gap-2">
+<input class="w-full p-1 border rounded bg-white" id="geo_t1x" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="1"/>
+<input class="w-full p-1 border rounded bg-white" id="geo_t1y" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="0"/>
+<input class="w-full p-1 border rounded bg-white" id="geo_t1z" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="-0.2"/>
+</div>
+</div>
+<div>
+<p class="font-bold text-slate-800 mb-1">Direction <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>θ</mi><mn>2</mn></msub></math> (defines <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><msub><mi>θ</mi><mn>2</mn></msub></mrow></msub></math>)</p>
+<div class="flex gap-2">
+<input class="w-full p-1 border rounded bg-white" id="geo_t2x" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="0"/>
+<input class="w-full p-1 border rounded bg-white" id="geo_t2y" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="1"/>
+<input class="w-full p-1 border rounded bg-white" id="geo_t2z" onchange="drawGeoSep()" oninput="drawGeoSep()" step="0.1" type="number" value="-0.2"/>
+</div>
+</div>
+<div class="pt-2 border-t border-slate-200">
+<p class="font-bold text-rose-700 mb-1">Weight <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>λ</mi><mn>2</mn></msub></math>: <span id="geo_l2_val">1.00</span></p>
+<input class="w-full accent-rose-600" id="geo_l2" max="20" min="0.05" oninput="drawGeoSep()" step="0.05" type="range" value="1"/>
+</div>
+</div>
+<div class="col-span-2 relative h-[400px] border border-slate-200 rounded-lg bg-white overflow-hidden" id="geoSepContainer">
+<div class="absolute top-0 left-0 w-full h-full" id="geoSepPlotly"></div>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-100 pb-4">
+<div>
+<h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-filter text-rose-500 mr-2"></i> Subsampling Simulator</h3>
+<p class="text-base text-slate-500 mt-1">Comparing the dense, intractable full path with the tractably subsampled ladder times for <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo stretchy="false">)</mo></math>.</p>
+</div>
+<div class="flex gap-2 mt-4 md:mt-0">
+<button class="px-3 py-2 bg-slate-700 text-white rounded shadow hover:bg-slate-800 transition font-medium text-sm focus:outline-none whitespace-nowrap" id="btn-toggle-subsample">
+<i class="fa-solid fa-eye-slash mr-1"></i> Subsample Only
+                        </button>
+<button class="px-3 py-2 bg-rose-600 text-white rounded shadow hover:bg-rose-700 transition font-medium text-sm focus:outline-none whitespace-nowrap" id="btn-regen-subsample">
+<i class="fa-solid fa-rotate mr-1"></i> New Data
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="chart-container" style="background-color: #fafafa; min-height: 250px; height: 35vh; max-width: none;">
+<canvas id="subsampleGlobalChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">Global (X vs Y)</div>
+</div>
+<div class="chart-container" style="background-color: #fafafa; min-height: 250px; height: 35vh; max-width: none;">
+<canvas id="subsampleZoomChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">Zoomed (Left Anchor)</div>
+</div>
+<div class="chart-container" style="background-color: #fafafa; min-height: 250px; height: 35vh; max-width: none;">
+<canvas id="subsampleTxChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">Time vs X</div>
+</div>
+<div class="chart-container" style="background-color: #fafafa; min-height: 250px; height: 35vh; max-width: none;">
+<canvas id="subsampleTyChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">Time vs Y</div>
+</div>
+</div>
+<p class="text-base mb-3 mt-4">Our goal is to prove that the time-changed process immediately enters a cone <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>C</mi></math> (in an appropriate class) almost surely:</p>
+<p class="text-center my-3 bg-white p-2 rounded border inline-block mx-auto w-full overflow-x-auto"><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><msup><mi mathvariant="normal">Γ</mi><mi>θ</mi></msup></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mtext> immediately enters </mtext><mi>C</mi><mtext> a.s.</mtext></math></p>
+<p class="text-base mt-2">This guarantees the actual post-infimum process <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><mo>⋅</mo></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>C</mi></math> (since <math xmlns="http://www.w3.org/1998/Math/MathML"><mi mathvariant="normal">Γ</mi></math> is immediately active and <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi mathvariant="normal">Γ</mi><mrow data-mjx-texclass="ORD"><mn>0</mn><mo>+</mo></mrow></msub><mo>=</mo><mn>0</mn></math> by right-continuity), which is sufficient to rule out normal cone intersections.</p>
+</div>
+</section>
+<section class="mb-24 scroll-mt-24" id="machinery">
+<div class="mb-8">
+<span class="text-slate-500 font-bold tracking-wider uppercase text-sm">Part 5</span>
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif">Fluctuation Machinery</h2>
+<p class="text-base text-slate-600 leading-relaxed mb-4">
+                    The final step is to rigorously analyse the subsampled process. We build the machinery as follows: transforming the post-infimum into a running supremum, analysing the time-changed process via fluctuation theory, and characterising regular points via an extended Rogozin criterion.
+                </p>
+<p class="text-base text-slate-600 bg-slate-100 p-4 border-l-4 border-slate-400 rounded">
+                    Technically, we use <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>T</mi><mo>=</mo><mi mathvariant="normal">∞</mi></math> and exponential killing. The actual intuition is that the results will hold a.s. simultaneously for a sequence of i.i.d. standard exponential times, so the strong law of large numbers and a density argument closes the gap, pushing everything back to deterministic times.
+                </p>
+</div>
+<div class="math-box shadow-sm mb-10 border-l-slate-600">
+<p class="text-lg font-bold text-slate-800 mb-3"><i class="fa-solid fa-sitemap text-slate-500 mr-2"></i> Logic Flowchart</p>
+<p class="text-base mb-3">Our goal is to prove that the time-changed process immediately enters a cone <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>C</mi></math> (in an appropriate class) almost surely:</p>
+<p class="text-center my-3 bg-white p-2 rounded border inline-block mx-auto w-full overflow-x-auto"><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><msup><mi mathvariant="normal">Γ</mi><mi>θ</mi></msup></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><mtext> immediately enters </mtext><mi>C</mi><mtext> a.s.</mtext></math></p>
+<p class="text-base mt-2 mb-3">where <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi mathvariant="normal">Γ</mi><mi>θ</mi></msup></math> is the right-continuous inverse local time of the reflected process of <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> at its running supremum.</p>
+<p class="text-base">This guarantees the actual post-infimum process <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><mo>⋅</mo></mrow></msub><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub></math> enters <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>C</mi></math>, which is necessary for ruling out normal cone intersections.</p>
+</div>
+<div class="flex flex-col gap-4 mb-10">
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
+<h3 class="text-xl font-bold text-slate-800 mb-3 border-b pb-2"><i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-2"></i> Bertoin's Excursion Reversal</h3>
+<p class="text-base text-slate-600 mb-4">
+                        Using time-reversal on excursions away from the directional extrema, we obtain a multidimensional extension of Bertoin's identity, which morally says that the analysis of the process post all-time infimum is equivalent to the analysis of the running supremum of the same process starting from 0.
+                    </p>
+<div class="bg-slate-50 p-3 rounded border overflow-x-auto text-base mt-2 mb-2">
+<b>Theorem (Chaumont, GC, Mijatović, 2026+).</b><br/> Fix <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>θ</mi><mo>∈</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math> such that <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>I</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msub><mo>&gt;</mo><mo>−</mo><mi mathvariant="normal">∞</mi></math> a.s. and <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mo>−</mo><mi mathvariant="normal">∞</mi><mo>,</mo><mn>0</mn><mo stretchy="false">)</mo></math> a.s. Then,
+                        <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mo stretchy="false">(</mo><mi>X</mi><mo>−</mo><msup><munder><mi>X</mi><mo accent="true">―</mo></munder><mi>θ</mi></msup><mo>,</mo><msup><munder><mi>X</mi><mo accent="true">―</mo></munder><mi>θ</mi></msup><mo>−</mo><msub><mrow data-mjx-texclass="ORD"><mi data-mjx-variant="-tex-calligraphic" mathvariant="script">I</mi></mrow><mi>θ</mi></msub><msub><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><msub><mi>η</mi><mi>θ</mi></msub><mo>+</mo><mi>t</mi></mrow></msub><mo stretchy="false">)</mo><mo>;</mo><mi>t</mi><mo>⩾</mo><mn>0</mn><mo stretchy="false">)</mo><mrow data-mjx-texclass="REL"><mover><mrow data-mjx-texclass="OP"><mo>=</mo></mrow><mrow data-mjx-texclass="ORD"><mi>d</mi></mrow></mover></mrow><mo stretchy="false">(</mo><mo stretchy="false">(</mo><mi>R</mi><mo>,</mo><msup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>θ</mi></msup><msub><mo stretchy="false">)</mo><mi>t</mi></msub><mo>;</mo><mi>t</mi><mo>⩾</mo><mn>0</mn><mo stretchy="false">)</mo><mo>.</mo></math>
+</div>
+<p class="text-base text-slate-600 mt-3">Here, <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><munder><mi>X</mi><mo accent="true">―</mo></munder><mi>θ</mi></msup></math> and <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>θ</mi></msup></math> track <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> as <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> attains its future infimum or running supremum, respectively: consider the time of the ultimate infimum prior to <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>t</mi></math>,</p>
+<div class="bg-slate-50 p-3 rounded border text-center overflow-x-auto text-base mt-2 mb-2">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup><mo>:=</mo><mo data-mjx-texclass="OP" movablelimits="true">sup</mo><mrow data-mjx-texclass="INNER"><mo data-mjx-texclass="OPEN">{</mo><mi>s</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mi>t</mi><mo stretchy="false">]</mo><mo>:</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>s</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo>∧</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><mi>s</mi><mo>−</mo></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>=</mo><munder><mo data-mjx-texclass="OP" movablelimits="true">inf</mo><mrow data-mjx-texclass="ORD"><mi>u</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mi>t</mi><mo stretchy="false">]</mo></mrow></munder><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>u</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo data-mjx-texclass="CLOSE">}</mo></mrow><mo>,</mo></math>
+</div>
+<p class="text-base text-slate-600 mt-2">Then <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><munder><mi>X</mi><mo accent="true">―</mo></munder><mi>θ</mi></msup></math> is defined to record the position of <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> at this time:</p>
+<div class="bg-slate-50 p-3 rounded border text-center overflow-x-auto text-base mt-2 mb-2">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><munder><mi>X</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup><mo>:=</mo><mrow data-mjx-texclass="INNER"><mo data-mjx-texclass="OPEN">{</mo><mtable columnalign="left left" columnspacing="1em" rowspacing=".2em"><mtr><mtd><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup></mrow></msub><mo>,</mo></mtd><mtd><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>⩽</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup><mo>−</mo></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>,</mo></mtd></mtr><mtr><mtd><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup><mo>−</mo></mrow></msub><mo>,</mo></mtd><mtd><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>&gt;</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mrow data-mjx-texclass="ORD"><msubsup><munder><mi>τ</mi><mo accent="true">―</mo></munder><mi>t</mi><mi>θ</mi></msubsup><mo>−</mo></mrow></msub><mo fence="false" stretchy="false">⟩</mo><mo>.</mo></mtd></mtr></mtable><mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo></mrow></math>
+</div>
+<p class="text-base text-slate-600 mt-2">The process <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>θ</mi></msup></math> is defined similarly using the times at which <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> attains new suprema <math xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mover><mi>τ</mi><mo accent="true">―</mo></mover><mi>t</mi><mi>θ</mi></msubsup></math>. The process <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>R</mi></math> is defined as a time and space reversal excursion-by-excursion of the reflected process above its running supremum:</p>
+<div class="bg-slate-50 p-3 rounded border text-center overflow-x-auto text-base mt-2 mb-2">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>R</mi><mi>t</mi></msub><mo>:=</mo><mo stretchy="false">(</mo><msup><mover><mi>X</mi><mo accent="true">―</mo></mover><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msup><mo>−</mo><mi>X</mi><msub><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><mo stretchy="false">(</mo><msub><mi>d</mi><mi>t</mi></msub><mo>+</mo><msub><mi>g</mi><mi>t</mi></msub><mo>−</mo><mi>t</mi><mo stretchy="false">)</mo><mo>−</mo></mrow></msub></math>
+</div>
+<p class="text-base text-slate-600">where <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>g</mi><mi>t</mi></msub></math> and <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>d</mi><mi>t</mi></msub></math> are the left and right endpoints of the excursion interval straddling <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>t</mi></math>.</p>
+<p class="text-base text-center text-indigo-600 mt-3 font-semibold uppercase tracking-wide">No complex conditionings are required!</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+<div>
+<h3 class="text-xl font-bold text-slate-800 mb-1"><i class="fa-solid fa-arrow-right-arrow-left text-indigo-500 mr-2"></i> Visualizing Bertoin's Transformation</h3>
+<p class="text-sm text-slate-500">Side-by-side components vs time demonstrating the equivalence of the future infimum and the running supremum.</p>
+</div>
+<button class="mt-4 md:mt-0 px-3 py-2 bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 transition font-medium text-xs focus:outline-none whitespace-nowrap" id="btn-regen-bertoin">
+<i class="fa-solid fa-rotate mr-1"></i> New Excursion Reversal
+                        </button>
+</div>
+<div class="flex flex-col gap-4">
+<div class="chart-container" style="background-color: #fafafa; min-height: 350px;">
+<canvas id="bertoinChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">1D: Time vs X</div>
+</div>
+<div class="chart-container" style="background-color: #fafafa; min-height: 350px;">
+<canvas id="bertoin2DChart"></canvas>
+<div class="absolute bottom-2 right-2 text-xs text-slate-500 font-bold bg-white/80 px-2 py-1 rounded shadow-sm">2D: X vs Y</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-slate-800 text-white p-6 md:p-8 rounded-xl shadow-lg relative overflow-hidden">
+<i class="fa-solid fa-infinity absolute -right-4 -bottom-4 text-9xl text-slate-700 opacity-20"></i>
+<div class="relative z-10">
+<h3 class="text-xl font-bold mb-4 text-teal-300 serif border-b border-slate-600 pb-2">Multidimensional Fluctuation Identities</h3>
+<div class="flex flex-col gap-4">
+<div>
+<p class="text-lg text-slate-300 font-semibold mb-2">Pecherskii-Rogozin in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math> (Tamura &amp; Tanaka, 2002).</p>
+<p class="text-base text-slate-400 mb-2"> If <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>ζ</mi><mo>∼</mo><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">Exp</mi></mrow><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></math> is an independent exponential time with rate <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>λ</mi><mo>&gt;</mo><mn>0</mn></math>, then the vectors <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><msubsup><mover><mi>τ</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo>,</mo><msubsup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo stretchy="false">)</mo></math> and <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mi>ζ</mi><mo>−</mo><msubsup><mover><mi>τ</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo>,</mo><msub><mi>X</mi><mi>ζ</mi></msub><mo>−</mo><msubsup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo stretchy="false">)</mo></math> in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mrow data-mjx-texclass="ORD"><mi>d</mi><mo>+</mo><mn>1</mn></mrow></msup></math> are independent and infinitely divisible and, for <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mi>ϕ</mi><mo>,</mo><mi>u</mi><mo stretchy="false">)</mo><mo>∈</mo><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mo>+</mo></msub><mo>×</mo><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mrow data-mjx-texclass="ORD"><mi>d</mi></mrow></msup></math>, we have</p>
+<div class="bg-slate-900 p-3 rounded border border-slate-700 overflow-x-auto text-base">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mtable columnalign="right left" columnspacing="0em" displaystyle="true" rowspacing="3pt"><mtr><mtd><mi>log</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">E</mi></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">[</mo></mrow><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>ϕ</mi><msubsup><mover><mi>τ</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo>+</mo><mi>i</mi><mo fence="false" stretchy="false">⟨</mo><mi>u</mi><mo>,</mo><msubsup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mi>θ</mi></msubsup><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">]</mo></mrow></mtd><mtd><mi></mi><mo>=</mo><msub><mo data-mjx-texclass="OP">∫</mo><mrow data-mjx-texclass="ORD"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mo>+</mo></msub></mrow></msub><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><msub><mo data-mjx-texclass="OP">∫</mo><mrow data-mjx-texclass="ORD"><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">cl</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msub></mrow></msub><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mo stretchy="false">(</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>ϕ</mi><mi>t</mi><mo>+</mo><mi>i</mi><mo fence="false" stretchy="false">⟨</mo><mi>u</mi><mo>,</mo><mi>x</mi><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mo stretchy="false">(</mo><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><mi>d</mi><mi>x</mi><mo stretchy="false">)</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>λ</mi><mi>t</mi></mrow></msup><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac></mtd></mtr><mtr><mtd></mtd><mtd><mi></mi><mo>=</mo><mi>log</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">(</mo></mrow><mfrac><mrow><msub><mi>κ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msub><mo stretchy="false">(</mo><mi>λ</mi><mo>,</mo><mn>0</mn><mo stretchy="false">)</mo></mrow><mrow><msub><mi>κ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msub><mo stretchy="false">(</mo><mi>λ</mi><mo>+</mo><mi>ϕ</mi><mo>,</mo><mi>u</mi><mo stretchy="false">)</mo></mrow></mfrac><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd><mi>log</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">E</mi></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">[</mo></mrow><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>ϕ</mi><mo stretchy="false">(</mo><mi>ζ</mi><mo>−</mo><msubsup><mover><mi>τ</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo stretchy="false">)</mo><mo>+</mo><mi>i</mi><mo fence="false" stretchy="false">⟨</mo><mi>u</mi><mo>,</mo><msub><mi>X</mi><mi>ζ</mi></msub><mo>−</mo><msubsup><mover><mi>X</mi><mo accent="true">―</mo></mover><mi>ζ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msubsup><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mrow data-mjx-texclass="ORD"><mo maxsize="1.623em" minsize="1.623em">]</mo></mrow></mtd><mtd><mi></mi><mo>=</mo><msub><mo data-mjx-texclass="OP">∫</mo><mrow data-mjx-texclass="ORD"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mo>+</mo></msub></mrow></msub><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><msub><mo data-mjx-texclass="OP">∫</mo><mrow data-mjx-texclass="ORD"><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>θ</mi></mrow></msub></mrow></msub><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mo stretchy="false">(</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>ϕ</mi><mi>t</mi><mo>+</mo><mi>i</mi><mo fence="false" stretchy="false">⟨</mo><mi>u</mi><mo>,</mo><mi>x</mi><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mo stretchy="false">(</mo><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><mi>d</mi><mi>x</mi><mo stretchy="false">)</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>λ</mi><mi>t</mi></mrow></msup><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>,</mo></mtd></mtr></mtable></math>
+</div>
+<p class="text-base text-slate-400 mb-2"> where we define</p>
+<div class="bg-slate-900 p-3 rounded border border-slate-700 overflow-x-auto text-base">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mstyle scriptlevel="0"><mspace width="1em"></mspace></mstyle><msub><mi>κ</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>ϕ</mi><mo>,</mo><mi>ϑ</mi><mo stretchy="false">)</mo><mo>:=</mo><mi>exp</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">(</mo></mrow><msubsup><mo data-mjx-texclass="OP">∫</mo><mn>0</mn><mi mathvariant="normal">∞</mi></msubsup><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><msub><mo data-mjx-texclass="OP">∫</mo><mrow data-mjx-texclass="ORD"><mrow data-mjx-texclass="ORD"><mi data-mjx-auto-op="false">cl</mi></mrow><mstyle scriptlevel="0"><mspace width="0.167em"></mspace></mstyle><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub></mrow></msub><mstyle scriptlevel="0"><mspace width="-0.167em"></mspace></mstyle><mo stretchy="false">(</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>t</mi></mrow></msup><mo>−</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo>−</mo><mi>ϕ</mi><mi>t</mi><mo>+</mo><mi>i</mi><mo fence="false" stretchy="false">⟨</mo><mi>ϑ</mi><mo>,</mo><mi>x</mi><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mo stretchy="false">)</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mo stretchy="false">(</mo><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><mi>d</mi><mi>x</mi><mo stretchy="false">)</mo><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mrow data-mjx-texclass="ORD"><mo maxsize="2.047em" minsize="2.047em">)</mo></mrow><mo>.</mo></math>
+</div>
+</div>
+<div>
+<p class="text-lg text-slate-300 font-semibold mb-2">Fristedt in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math> (Chaumont, GC, Mijatović, 2026+).</p>
+<p class="text-base text-slate-400 mb-2">The time-changed process <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mi>i</mi><mi>d</mi><mo>,</mo><mi>X</mi><mo stretchy="false">)</mo><mo>∘</mo><msubsup><mi mathvariant="normal">Γ</mi><mi>t</mi><mi>θ</mi></msubsup></math> is a killed Lévy process with exponent</p>
+<div class="bg-slate-900 p-3 rounded border border-slate-700 overflow-x-auto text-base">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mi>log</mi><mo data-mjx-texclass="NONE">⁡</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">E</mi></mrow><mo stretchy="false">[</mo><msup><mi>e</mi><mrow data-mjx-texclass="ORD"><mo fence="false" stretchy="false">⟨</mo><mo stretchy="false">(</mo><mo>−</mo><mi>ϕ</mi><mo>,</mo><mi>i</mi><mi>ϑ</mi><mo stretchy="false">)</mo><mo>,</mo><msub><mi>Y</mi><mn>1</mn></msub><mo fence="false" stretchy="false">⟩</mo></mrow></msup><mo stretchy="false">]</mo><mo>=</mo><mo>−</mo><msub><mi>c</mi><mn>0</mn></msub><msub><mi>κ</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>ϕ</mi><mo>,</mo><mi>ϑ</mi><mo stretchy="false">)</mo><mo>.</mo></math>
+</div>
+<p class="text-base text-slate-400 mt-2">Here, <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi mathvariant="normal">Γ</mi><mi>θ</mi></msup></math> is the inverse local time of the reflected process of <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> at its running supremum.</p>
+</div>
+<div class="mt-2 border-t border-slate-600 pt-4">
+<p class="text-lg text-slate-300 font-semibold mb-2">The ABCD Identity in <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mi>d</mi></msup></math> (Theorem; Chaumont, GC, Mijatović, 2026+).</p>
+<p class="text-base text-slate-400 mb-2"> If <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">)</mo></math>, then the following measures agree</p>
+<div class="bg-slate-900 p-3 rounded border border-slate-700 overflow-x-auto text-base">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="1.2em" minsize="1.2em">(</mo></mrow><msubsup><mi>L</mi><mrow data-mjx-texclass="ORD"><msup><mi>σ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msup><mo stretchy="false">(</mo><msup><mi>x</mi><mi>θ</mi></msup><mo stretchy="false">)</mo></mrow><mi>θ</mi></msubsup><mo>∈</mo><mi>d</mi><mi>s</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><mi>d</mi><mi>x</mi><mrow data-mjx-texclass="ORD"><mo maxsize="1.2em" minsize="1.2em">)</mo></mrow><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>=</mo><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mrow data-mjx-texclass="ORD"><mo maxsize="1.2em" minsize="1.2em">(</mo></mrow><msubsup><mi mathvariant="normal">Γ</mi><mi>s</mi><mi>θ</mi></msubsup><mo>∈</mo><mi>d</mi><mi>t</mi><mo>,</mo><mi>X</mi><mo>∘</mo><msubsup><mi mathvariant="normal">Γ</mi><mi>s</mi><mi>θ</mi></msubsup><mo>∈</mo><mi>d</mi><mi>x</mi><mrow data-mjx-texclass="ORD"><mo maxsize="1.2em" minsize="1.2em">)</mo></mrow><mfrac><mrow><mi>d</mi><mi>s</mi></mrow><mi>s</mi></mfrac></math>
+</div>
+<p class="text-base text-slate-400 mt-2">for <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mi>s</mi><mo>,</mo><mi>t</mi><mo>,</mo><mi>x</mi><mo stretchy="false">)</mo><mo>∈</mo><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">)</mo><mo>×</mo><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">)</mo><mo>×</mo><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mi>θ</mi></msub></math>, where <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>σ</mi><mrow data-mjx-texclass="ORD"><mi>θ</mi></mrow></msup><mo stretchy="false">(</mo><mi>u</mi><mo stretchy="false">)</mo><mo>:=</mo><mo data-mjx-texclass="OP" movablelimits="true">inf</mo><mo fence="false" stretchy="false">{</mo><mi>t</mi><mo>&gt;</mo><mn>0</mn><mo>:</mo><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo><mo>&gt;</mo><mi>u</mi><mo fence="false" stretchy="false">}</mo></math> is the first time <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><mi>θ</mi><mo>,</mo><msub><mi>X</mi><mi>t</mi></msub><mo fence="false" stretchy="false">⟩</mo></math> hits <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mi>u</mi><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">)</mo></math>, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>u</mi><mo>&gt;</mo><mn>0</mn></math>.</p>
+<p class="text-sm text-slate-400 mt-2">This identity was first established in <math xmlns="http://www.w3.org/1998/Math/MathML"><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow></math> by Alili &amp; Chaumont by extending a result of Bertoin &amp; Doney. We note that the process <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>L</mi><mi>θ</mi></msup><mo>∘</mo><msup><mi>σ</mi><mi>θ</mi></msup></math> is the right-continuous inverse of <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>X</mi><mi>θ</mi></msup><mo>∘</mo><msup><mi mathvariant="normal">Γ</mi><mi>θ</mi></msup></math>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-10 bg-white p-6 rounded-xl border-l-4 border-slate-800 shadow-sm">
+<h3 class="text-2xl font-bold text-slate-800 mb-4 serif">Extending Rogozin's Criterion to Cones via Subsampling</h3>
+<p class="text-base text-slate-700 mb-3 font"> <b>Theorem (Chaumont, GC, Mijatović, 2026+).</b> Fix <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>θ</mi><mi>n</mi></msub><mo>∈</mo><msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">R</mi></mrow><mn>0</mn><mi>d</mi></msubsup></math>. If
+                    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mo data-mjx-texclass="OP">∫</mo><mn>0</mn><mn>1</mn></msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mrow data-mjx-texclass="INNER"><mo data-mjx-texclass="OPEN">(</mo><msub><mi>X</mi><mi>t</mi></msub><mo>∈</mo><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mi>k</mi></msub></mrow></msub><mo data-mjx-texclass="CLOSE">)</mo></mrow><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>=</mo><mi mathvariant="normal">∞</mi><mo>,</mo></math>
+                    then <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mi>k</mi></msub></mrow></msub></math> a.s.</p>
+<div class="mt-4 pl-4 border-l-2 border-slate-200 space-y-3 text-base text-slate-600">
+<p><strong class="text-slate-800">Proof.</strong> We proceed by induction on <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>n</mi></math>.</p>
+<p><strong class="text-slate-800">Base Case <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>n</mi><mo>=</mo><mn>1</mn></math>:</strong> Classical Rogozin's criterion: <math xmlns="http://www.w3.org/1998/Math/MathML"><mo fence="false" stretchy="false">⟨</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> is a 1D Lévy process that immediately becomes positive.</p>
+<p><strong class="text-slate-800">Inductive Step:</strong> Suppose true for <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>n</mi><mo>−</mo><mn>1</mn></math>.</p>
+<ol class="list-decimal pl-5 space-y-2 mt-2">
+<li>By Rogozin, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>Y</mi><mo>:=</mo><mo fence="false" stretchy="false">⟨</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo fence="false" stretchy="false">⟩</mo></math> enters <math xmlns="http://www.w3.org/1998/Math/MathML"><mo stretchy="false">(</mo><mn>0</mn><mo>,</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">)</mo></math> immediately.</li>
+<li>Fristedt's theorem ensures <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>∘</mo><msup><mi mathvariant="normal">Γ</mi><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mn>1</mn></msub></mrow></msup></math> is a Lévy process. Crucially, this Lévy process is <strong>immediately active</strong> (i.e., <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi mathvariant="normal">Γ</mi><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mn>1</mn></msub></mrow></msup></math> is a subordinator), which is important because immediate events are still immediate even after time-changing, which would not be the case if the regularity of Step 1 failed.</li>
+<li>The ABCD identity gives: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><msubsup><mo data-mjx-texclass="OP">∫</mo><mn>0</mn><mn>1</mn></msubsup><mrow data-mjx-texclass="ORD"><mi mathvariant="double-struck">P</mi></mrow><mrow data-mjx-texclass="INNER"><mo data-mjx-texclass="OPEN">(</mo><mi>X</mi><mo>∘</mo><msubsup><mi mathvariant="normal">Γ</mi><mi>t</mi><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mn>1</mn></msub></mrow></msubsup><mo>∈</mo><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>k</mi><mo>=</mo><mn>2</mn></mrow><mi>n</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mi>k</mi></msub></mrow></msub><mo data-mjx-texclass="CLOSE">)</mo></mrow><mfrac><mrow><mi>d</mi><mi>t</mi></mrow><mi>t</mi></mfrac><mo>=</mo><mi mathvariant="normal">∞</mi></math></li>
+<li>By the inductive hypothesis, <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi><mo>∘</mo><msup><mi mathvariant="normal">Γ</mi><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mn>1</mn></msub></mrow></msup></math> immediately enters <math xmlns="http://www.w3.org/1998/Math/MathML"><munderover><mo data-mjx-texclass="OP">⋂</mo><mrow data-mjx-texclass="ORD"><mi>k</mi><mo>=</mo><mn>2</mn></mrow><mi>n</mi></munderover><msub><mrow data-mjx-texclass="ORD"><mi mathvariant="fraktur">L</mi></mrow><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mi>k</mi></msub></mrow></msub></math> (and thus the full intersection).</li>
+<li>Since <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi mathvariant="normal">Γ</mi><mrow data-mjx-texclass="ORD"><msub><mi>θ</mi><mn>1</mn></msub></mrow></msup></math> is a subordinator, the original process <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>X</mi></math> also enters immediately. <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>◼</mi></math></li>
+</ol>
+</div>
+</div>
+<div class="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-sm">
+<p><i class="fa-solid fa-book-open mr-1"></i> Interactive presentation based on the research project "Corners of the Convex Hull of Lévy Processes" by Loïc Chaumont, Jorge González Cázares, and Aleksandar Mijatović.</p>
+</div>
+</section>
+<section class="mb-24 scroll-mt-24" id="references">
+<div class="mb-8">
+<h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4 serif border-b border-slate-200 pb-4">References</h2>
+</div>
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+<ul class="list-none space-y-4 text-sm text-slate-600">
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Alexander, R., &amp; Eldan, R. (2019).</b> Cone points of Brownian motion in arbitrary dimension.<i> The Annals of Probability</i>, 47(5), 3143-3169.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Bertoin, J. (1993).</b> Splitting at the infimum and excursions in half-lines for random walks and Lévy processes. <i>Stochastic Processes and their Applications</i>, 47(1), 17-35.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Burdzy, K. (1985).</b> Brownian paths and cones. <i>The Annals of Probability</i>, 13(3), 1006-1010.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Burdzy, K., &amp; Kulczycki, T. (2003).</b> Stable processes have thorns. <i>The Annals of Probability</i>, 31(1), 170-194.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Cranston, M., Hsu, P., &amp; March, P. (1989).</b> Smoothness of the convex hull of planar Brownian motion. <i>The Annals of Probability</i>, 17(1), 144-150.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>El Bachir, M. (1983).</b> <i>L'enveloppe convexe du mouvement brownien</i>. PhD Thesis, Université Paul Sabatier.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Evans, S. N. (1985).</b> On the Hausdorff dimension of Brownian cone points. <i>Mathematical Proceedings of the Cambridge Philosophical Society</i>, 98(2), 343-353.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>González Cázares, J., Kramer-Bang, S., &amp; Mijatović, A. (2024).</b> Convex hulls of one-dimensional Lévy processes. <i>Annales de l’Institut Henri Poincaré (B) Probability and Statistics</i>, 60(4), 2352–2381.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Greenwood, P., &amp; Pitman, J. (1980).</b> Fluctuation identities for Lévy processes and splitting at the maximum. <i>Advances in Applied Probability</i>, 12(4), 893-902.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Lévy, P. (1948).</b> <i>Processus stochastiques et mouvement brownien</i>. Gauthier-Villars, Paris.</span></li>
+<li class="flex items-start"><i class="fa-solid fa-file-lines text-slate-400 mt-1 mr-3"></i><span><b>Tamura, Y., &amp; Tanaka, H. (2002).</b> On the joint distribution of the supremum and the terminal value of a multidimensional Lévy process. <i>Journal of the Mathematical Society of Japan</i>.</span></li>
+</ul>
+</div>
+<div class="mt-12 p-8 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+<div>
+<h3 class="text-xl font-bold text-slate-800 mb-2">Access this presentation online</h3>
+<p class="text-slate-600 text-sm">Scan the QR code to open the interactive version of this presentation directly on your device, or visit:<br/>
+<a class="text-indigo-600 hover:underline break-all font-medium mt-1 inline-block" href="https://aleks-mijatovic.github.io/Smoothness_Levy_Convex_Hull/">https://aleks-mijatovic.github.io/Smoothness_Levy_Convex_Hull/</a></p>
+</div>
+<div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm shrink-0" id="qrcode-footer"></div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button for Desktop Sidebar Toggle -->
+<button class="hidden md:flex fixed bottom-6 left-6 z-50 bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all focus:outline-none" id="floating-menu-btn">
+<i class="fa-solid fa-bars text-xl"></i>
+</button>
+<script>
+        const AppState = {
+            overviewData: { path: [], hull: [] },
+            subsampleData: { path: [], subsample: [] },
+            subsampleViewMode: 'both'
+        };
+
+        function generateRandomWalk(numSteps, volatility = 1) {
+            let path = [{x: 0, y: 0}];
+            let currentX = 0, currentY = 0;
+            for(let i=0; i<numSteps; i++){
+                let r = Math.pow(Math.random(), -0.7) * volatility; 
+                let theta = Math.random() * 2 * Math.PI;
+                currentX += r * Math.cos(theta);
+                currentY += r * Math.sin(theta);
+                path.push({x: currentX, y: currentY});
+            }
+            return path;
+        }
+
+        function computeConvexHull(points) {
+            if (points.length <= 3) return points;
+            const sorted = [...points].sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+            const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+            
+            let lower = [];
+            for (let i = 0; i < sorted.length; i++) {
+                while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], sorted[i]) <= 0) {
+                    lower.pop();
+                }
+                lower.push(sorted[i]);
+            }
+            
+            let upper = [];
+            for (let i = sorted.length - 1; i >= 0; i--) {
+                while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], sorted[i]) <= 0) {
+                    upper.pop();
+                }
+                upper.push(sorted[i]);
+            }
+            
+            upper.pop();
+            lower.pop();
+            return lower.concat(upper).concat([lower[0]]);
+        }
+
+        let hullChartInstance = null;
+        let subsampleChartInstances = {};
+        let bertoinChartInstance = null;
+        let bertoin2DChartInstance = null;
+
+        function initCharts() {
+            const ctxHull = document.getElementById('hullChart').getContext('2d');
+            hullChartInstance = new Chart(ctxHull, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Path of X', data: [], backgroundColor: 'rgba(148, 163, 184, 0.4)', borderColor: 'transparent', pointRadius: 0.5, showLine: true, borderWidth: 0.5, borderColor: 'rgba(148, 163, 184, 0.2)', order: 2 },
+                        { label: 'Convex Hull', data: [], type: 'line', backgroundColor: 'rgba(13, 148, 136, 0.05)', borderColor: 'rgba(13, 148, 136, 0.8)', borderWidth: 1.5, pointRadius: 0, fill: true, order: 1 },
+                        { label: 'Dir. 1', data: [], type: 'line', borderColor: '#e11d48', borderWidth: 1.5, pointRadius: 0, order: 0 },
+                        { label: 'Supp. line 1', data: [], type: 'line', borderColor: '#e11d48', borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0, order: 0 },
+                        { label: 'Dir. 2', data: [], type: 'line', borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0, order: 0 },
+                        { label: 'Supp. line 2', data: [], type: 'line', borderColor: '#3b82f6', borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0, order: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: { 
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)' }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+
+            const subOpt = {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            };
+            
+            const dsTemplate = [
+                { label: 'Path', data: [], borderColor: 'rgba(148, 163, 184, 0.4)', backgroundColor: 'rgba(148, 163, 184, 0.6)', pointRadius: 0.7, showLine: true, borderWidth: 0.7, order: 4 },
+                { label: 'Running Inf', data: [], borderColor: '#ea580c', backgroundColor: '#ea580c', pointRadius: 0.7, showLine: false, order: 3 }, // dark orange
+                { label: 'Future Inf', data: [], borderColor: '#e11d48', backgroundColor: '#e11d48', pointRadius: 0.7, showLine: false, order: 2 }, // crimson
+                { label: 'Path Hull', data: [], type: 'line', borderColor: '#787276', borderWidth: 1.25, pointRadius: 0, fill: false, order: 1 }, // darkgrey
+                { label: 'Union Hull', data: [], type: 'line', borderColor: '#997950', borderWidth: 1.25, pointRadius: 0, fill: false, order: 0 } // brown
+            ];
+
+            subsampleChartInstances = {
+                global: new Chart(document.getElementById('subsampleGlobalChart').getContext('2d'), { type: 'scatter', data: { datasets: JSON.parse(JSON.stringify(dsTemplate)) }, options: JSON.parse(JSON.stringify(subOpt)) }),
+                zoom: new Chart(document.getElementById('subsampleZoomChart').getContext('2d'), { type: 'scatter', data: { datasets: JSON.parse(JSON.stringify(dsTemplate)) }, options: JSON.parse(JSON.stringify(subOpt)) }),
+                tx: new Chart(document.getElementById('subsampleTxChart').getContext('2d'), { type: 'scatter', data: { datasets: JSON.parse(JSON.stringify(dsTemplate)) }, options: JSON.parse(JSON.stringify(subOpt)) }),
+                ty: new Chart(document.getElementById('subsampleTyChart').getContext('2d'), { type: 'scatter', data: { datasets: JSON.parse(JSON.stringify(dsTemplate)) }, options: JSON.parse(JSON.stringify(subOpt)) })
+            };
+            
+            subsampleChartInstances.tx.data.datasets[3].hidden = true;
+            subsampleChartInstances.tx.data.datasets[4].hidden = true;
+            subsampleChartInstances.ty.data.datasets[3].hidden = true;
+            subsampleChartInstances.ty.data.datasets[4].hidden = true;
+
+            const ctxBertoin = document.getElementById('bertoinChart').getContext('2d');
+            bertoinChartInstance = new Chart(ctxBertoin, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Post-infimum', data: [], backgroundColor: 'rgba(148, 163, 184, 0.5)', borderColor: 'rgba(148, 163, 184, 0.5)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 3 },
+                        { label: 'Reversed Process', data: [], backgroundColor: 'rgba(14, 165, 233, 0.8)', borderColor: 'rgba(14, 165, 233, 0.8)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 2 },
+                        { label: 'Future Infimums', data: [], backgroundColor: 'rgba(225, 29, 72, 1)', borderColor: 'rgba(225, 29, 72, 1)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)' } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+
+            const ctxBertoin2D = document.getElementById('bertoin2DChart').getContext('2d');
+            bertoin2DChartInstance = new Chart(ctxBertoin2D, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Post-infimum', data: [], backgroundColor: 'rgba(148, 163, 184, 0.5)', borderColor: 'rgba(148, 163, 184, 0.5)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 3 },
+                        { label: 'Reversed Process', data: [], backgroundColor: 'rgba(14, 165, 233, 0.8)', borderColor: 'rgba(14, 165, 233, 0.8)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 2 },
+                        { label: 'Extremal Process', data: [], backgroundColor: 'rgba(225, 29, 72, 1)', borderColor: 'rgba(225, 29, 72, 1)', pointRadius: 0.375, showLine: true, borderWidth: 0.375, order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+
+        function updateHullData() {
+            const path = generateRandomWalk(4000, 2);
+            const hull = computeConvexHull(path);
+            
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            path.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+            let pathSpan = Math.max(maxX - minX, maxY - minY);
+            let planeLen = pathSpan * 0.33; 
+            let arrowLen = pathSpan * 0.15; 
+
+            // Add safe fallbacks in case DOM layout isn't fully computed yet
+            let cw = hullChartInstance.canvas.clientWidth || 800;
+            let ch = hullChartInstance.canvas.clientHeight || 400;
+            let aspect = cw / ch; 
+            let centerX = (maxX + minX) / 2;
+            let centerY = (maxY + minY) / 2;
+            let hSpan = pathSpan / 2;
+            
+            if (aspect > 1) {
+                hullChartInstance.options.scales.x.min = centerX - hSpan * aspect;
+                hullChartInstance.options.scales.x.max = centerX + hSpan * aspect;
+                hullChartInstance.options.scales.y.min = centerY - hSpan;
+                hullChartInstance.options.scales.y.max = centerY + hSpan;
+            } else {
+                hullChartInstance.options.scales.x.min = centerX - hSpan;
+                hullChartInstance.options.scales.x.max = centerX + hSpan;
+                hullChartInstance.options.scales.y.min = centerY - hSpan / aspect;
+                hullChartInstance.options.scales.y.max = centerY + hSpan / aspect;
+            }
+
+            let th1 = {x: 0.5, y: 1}; 
+            let norm1 = Math.sqrt(th1.x**2 + th1.y**2); 
+            th1.x /= norm1; th1.y /= norm1; 
+            
+            let th2 = {x: 1, y: 0.5}; 
+            let norm2 = Math.sqrt(th2.x**2 + th2.y**2); 
+            th2.x /= norm2; th2.y /= norm2;
+
+            let m1 = Infinity, idx1 = 0;
+            let m2 = Infinity, idx2 = 0;
+            path.forEach((p, i) => {
+                let v1 = p.x*th1.x + p.y*th1.y; 
+                if(v1 < m1) { m1 = v1; idx1 = i; }
+                let v2 = p.x*th2.x + p.y*th2.y; 
+                if(v2 < m2) { m2 = v2; idx2 = i; }
+            });
+
+            let p1 = path[idx1];
+            // Anchor both lines at the point exposed by the red one (p1)
+            let p2 = path[idx1]; 
+
+            AppState.overviewData.path = path;
+            AppState.overviewData.hull = hull;
+            
+            hullChartInstance.data.datasets[0].data = path;
+            hullChartInstance.data.datasets[1].data = hull;
+            hullChartInstance.data.datasets[2].data = [p1, {x: p1.x + arrowLen*th1.x, y: p1.y + arrowLen*th1.y}];
+            hullChartInstance.data.datasets[3].data = [{x: p1.x - planeLen*th1.y, y: p1.y + planeLen*th1.x}, {x: p1.x + planeLen*th1.y, y: p1.y - planeLen*th1.x}];
+            hullChartInstance.data.datasets[4].data = [p2, {x: p2.x + arrowLen*th2.x, y: p2.y + arrowLen*th2.y}];
+            hullChartInstance.data.datasets[5].data = [{x: p2.x - planeLen*th2.y, y: p2.y + planeLen*th2.x}, {x: p2.x + planeLen*th2.y, y: p2.y - planeLen*th2.x}];
+            hullChartInstance.update();
+        }
+
+        function updateSubsampleData() {
+            let n = 20000;
+            let path = [{x:0, y:0}];
+            let cX = 0, cY = 0;
+            for(let i=0; i<n; i++) {
+                let r = Math.min(Math.pow(Math.random(), -0.6), 50) * 0.1 * (Math.random() > 0.5 ? 1 : -1); 
+                let theta = Math.random() * 2 * Math.PI;
+                cX += r * Math.cos(theta);
+                cY += r * Math.sin(theta);
+                path.push({x: cX, y: cY});
+            }
+            for(let i=0; i<=n; i++) { path[i].x += i * 0.0008; path[i].y += i * 0.0004; }
+            
+            let xmin_idx = 0;
+            let minXVal = Infinity;
+            for(let i=0; i<=n; i++) {
+                if(path[i].x < minXVal) { minXVal = path[i].x; xmin_idx = i; }
+            }
+            
+            let Ipre = [];
+            let curMin = Infinity;
+            for(let i=0; i<=xmin_idx; i++){
+                if(path[i].x <= curMin) {
+                    curMin = path[i].x;
+                    Ipre.push({idx: i, p: path[i]});
+                }
+            }
+            
+            let Ipost = [ {idx: xmin_idx, p: path[xmin_idx]} ];
+            let cur = xmin_idx;
+            while(cur < n) {
+                let mVal = Infinity, mIdx = cur + 1;
+                for(let i=cur+1; i<=n; i++) {
+                    if(path[i].x <= mVal) { mVal = path[i].x; mIdx = i; }
+                }
+                if(mIdx > n || mVal === Infinity) break;
+                Ipost.push({idx: mIdx, p: path[mIdx]});
+                cur = mIdx;
+            }
+
+            let hull = computeConvexHull(path);
+            let unionHull = computeConvexHull(Ipre.map(i=>i.p).concat(Ipost.map(i=>i.p)));
+            
+            let t_vs_x_path = path.map((p, i) => ({x: i, y: p.x}));
+            let t_vs_x_pre = Ipre.map(i => ({x: i.idx, y: i.p.x}));
+            let t_vs_x_post = Ipost.map(i => ({x: i.idx, y: i.p.x}));
+            
+            let t_vs_y_path = path.map((p, i) => ({x: i, y: p.y}));
+            let t_vs_y_pre = Ipre.map(i => ({x: i.idx, y: i.p.y}));
+            let t_vs_y_post = Ipost.map(i => ({x: i.idx, y: i.p.y}));
+
+            AppState.subsampleData.path = path;
+            AppState.subsampleData.pre = Ipre.map(i=>i.p);
+            AppState.subsampleData.post = Ipost.map(i=>i.p);
+            AppState.subsampleData.hull = hull;
+            AppState.subsampleData.unionHull = unionHull;
+            AppState.subsampleData.txPath = t_vs_x_path;
+            AppState.subsampleData.txPre = t_vs_x_pre;
+            AppState.subsampleData.txPost = t_vs_x_post;
+            AppState.subsampleData.tyPath = t_vs_y_path;
+            AppState.subsampleData.tyPre = t_vs_y_pre;
+            AppState.subsampleData.tyPost = t_vs_y_post;
+            
+            // Precision zoom tightly anchored on the global minimum
+            let maxXVal = -Infinity;
+            for (let i = 0; i < path.length; i++) { if (path[i].x > maxXVal) maxXVal = path[i].x; }
+            let xspan = Math.abs(maxXVal - minXVal);
+            
+            let zoomRadiusX = xspan * 0.15; 
+            let qxm = minXVal - zoomRadiusX * 0.2;
+            let qxp = minXVal + zoomRadiusX * 1.5;
+            
+            let y_at_min = path[xmin_idx].y;
+            let zoomRadiusY = zoomRadiusX;
+            let qym = y_at_min - zoomRadiusY;
+            let qyp = y_at_min + zoomRadiusY;
+
+            subsampleChartInstances.zoom.options.scales.x.min = qxm;
+            subsampleChartInstances.zoom.options.scales.x.max = qxp;
+            subsampleChartInstances.zoom.options.scales.y.min = Math.min(qym, qyp);
+            subsampleChartInstances.zoom.options.scales.y.max = Math.max(qym, qyp);
+
+            renderSubsampleChart();
+        }
+
+        function renderSubsampleChart() {
+            let hideOriginal = AppState.subsampleViewMode === 'subsampleOnly';
+            
+            ['global', 'zoom'].forEach(key => {
+                let chart = subsampleChartInstances[key];
+                chart.data.datasets[0].hidden = hideOriginal;
+                chart.data.datasets[3].hidden = hideOriginal;
+                chart.data.datasets[0].data = AppState.subsampleData.path;
+                chart.data.datasets[1].data = AppState.subsampleData.pre;
+                chart.data.datasets[2].data = AppState.subsampleData.post;
+                chart.data.datasets[3].data = AppState.subsampleData.hull.concat(AppState.subsampleData.hull[0]);
+                chart.data.datasets[4].data = AppState.subsampleData.unionHull.concat(AppState.subsampleData.unionHull[0]);
+                chart.update();
+            });
+
+            subsampleChartInstances.tx.data.datasets[0].hidden = hideOriginal;
+            subsampleChartInstances.tx.data.datasets[0].data = AppState.subsampleData.txPath;
+            subsampleChartInstances.tx.data.datasets[1].data = AppState.subsampleData.txPre;
+            subsampleChartInstances.tx.data.datasets[2].data = AppState.subsampleData.txPost;
+            subsampleChartInstances.tx.update();
+
+            subsampleChartInstances.ty.data.datasets[0].hidden = hideOriginal;
+            subsampleChartInstances.ty.data.datasets[0].data = AppState.subsampleData.tyPath;
+            subsampleChartInstances.ty.data.datasets[1].data = AppState.subsampleData.tyPre;
+            subsampleChartInstances.ty.data.datasets[2].data = AppState.subsampleData.tyPost;
+            subsampleChartInstances.ty.update();
+        }
+
+        function updateBertoinData() {
+            let n = 10000;
+            let postX = [0], postY = [0];
+            for(let i=0; i<n; i++) {
+                let rX = Math.pow(Math.random(), -0.7) * (Math.random() > 0.48 ? 1 : -1) + 0.05; 
+                let rY = Math.pow(Math.random(), -0.7) * (Math.random() > 0.5 ? 1 : -1); 
+                postX.push(postX[i] + rX);
+                postY.push(postY[i] + rY);
+            }
+            
+            let minValX = Infinity, minIdxX = 0;
+            for(let i=0; i<postX.length; i++) {
+                if(postX[i] < minValX) { minValX = postX[i]; minIdxX = i; }
+            }
+            
+            let pX = postX.slice(minIdxX).map(v => v - minValX);
+            let pY = postY.slice(minIdxX).map(v => v - postY[minIdxX]);
+            
+            let fut_idx = new Int32Array(pX.length);
+            let cur_min = Infinity, cur_idx = pX.length - 1;
+            for(let i = pX.length - 1; i >= 0; i--) {
+                if(pX[i] <= cur_min) { cur_min = pX[i]; cur_idx = i; }
+                fut_idx[i] = cur_idx;
+            }
+            
+            let unique_fut_times = Array.from(new Set(fut_idx));
+            if(unique_fut_times[0] !== 0) unique_fut_times.unshift(0);
+            if(unique_fut_times[unique_fut_times.length-1] !== pX.length - 1) unique_fut_times.push(pX.length - 1);
+            
+            let rx = new Float64Array(pX.length);
+            let ry = new Float64Array(pX.length);
+            
+            for(let i=1; i<unique_fut_times.length; i++) {
+                let start = unique_fut_times[i-1];
+                let end = unique_fut_times[i];
+                let sumX = pX[start] + pX[end];
+                let sumY = pY[start] + pY[end];
+                
+                for(let j=start; j<=end; j++) {
+                    let rev_j = end - (j - start);
+                    rx[j] = sumX - pX[rev_j];
+                    ry[j] = sumY - pY[rev_j];
+                }
+            }
+            
+            let t_post = pX.map((v, i) => ({x: i, y: v}));
+            let t_rx = Array.from(rx).map((v, i) => ({x: i, y: v}));
+            let t_fut = Array.from(fut_idx).map((idx, i) => ({x: i, y: pX[idx]}));
+            
+            bertoinChartInstance.data.datasets[0].data = t_post;
+            bertoinChartInstance.data.datasets[1].data = t_rx;
+            bertoinChartInstance.data.datasets[2].data = t_fut;
+            bertoinChartInstance.update();
+
+            let xy_post = pX.map((v, i) => ({x: v, y: pY[i]}));
+            let xy_rx = Array.from(rx).map((v, i) => ({x: v, y: ry[i]}));
+            let xy_fut = Array.from(fut_idx).map((idx) => ({x: pX[idx], y: pY[idx]}));
+            
+            bertoin2DChartInstance.data.datasets[0].data = xy_post;
+            bertoin2DChartInstance.data.datasets[1].data = xy_rx;
+            bertoin2DChartInstance.data.datasets[2].data = xy_fut;
+            bertoin2DChartInstance.update();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateSubsampleData();
+            updateBertoinData();
+            
+            setTimeout(() => {
+                try { updateHullData(); } catch(e) { console.error(e); } // Auto-generate 2D Path & Convex Hull immediately with correct dimensions
+                try { renderFractalExamples(); } catch(e) { console.error(e); }
+                try { renderCornerBody(); } catch(e) { console.error(e); }
+                try { renderSingularBody(); } catch(e) { console.error(e); }
+                try { if (typeof renderGeneral3DHull === 'function') renderGeneral3DHull(); } catch(e) { console.error(e); }
+                try { drawGeoSep(); } catch(e) { console.error(e); }
+                
+                try {
+                    new QRCode(document.getElementById("qrcode-sidebar"), {
+                        text: "https://aleks-mijatovic.github.io/Smoothness_Levy_Convex_Hull/",
+                        width: 128,
+                        height: 128,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.L
+                    });
+                    new QRCode(document.getElementById("qrcode-footer"), {
+                        text: "https://aleks-mijatovic.github.io/Smoothness_Levy_Convex_Hull/",
+                        width: 120,
+                        height: 120,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.L
+                    });
+                } catch(e) { console.error("QR Code generation failed", e); }
+            }, 300);
+            
+            window.addEventListener('resize', () => {
+                try { drawGeoSep(); } catch(e) { console.error(e); }
+            });
+
+            document.getElementById('btn-generate-hull').addEventListener('click', updateHullData);
+            document.getElementById('btn-regen-subsample').addEventListener('click', updateSubsampleData);
+            document.getElementById('btn-regen-bertoin').addEventListener('click', updateBertoinData);
+            document.getElementById('btn-regen-3d-hull').addEventListener('click', renderGeneral3DHull);
+            
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            
+            document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            });
+
+            document.getElementById('floating-menu-btn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('sidebar-collapsed');
+            });
+
+            document.getElementById('btn-toggle-subsample').addEventListener('click', (e) => {
+                AppState.subsampleViewMode = AppState.subsampleViewMode === 'both' ? 'subsampleOnly' : 'both';
+                const btn = e.currentTarget;
+                if(AppState.subsampleViewMode === 'subsampleOnly') {
+                    btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i> Show Full Path';
+                    btn.classList.replace('bg-slate-700', 'bg-teal-600');
+                    btn.classList.replace('hover:bg-slate-800', 'hover:bg-teal-700');
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i> Subsample Only';
+                    btn.classList.replace('bg-teal-600', 'bg-slate-700');
+                    btn.classList.replace('hover:bg-teal-700', 'hover:bg-slate-800');
+                }
+                renderSubsampleChart();
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth' });
+                    
+                    const sidebar = document.getElementById('sidebar');
+                    if(window.innerWidth < 768){
+                        sidebar.classList.add('-translate-x-full');
+                    }
+                });
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { root: null, rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+
+            sections.forEach(section => observer.observe(section));
+        });
+
+        function renderFractalExamples() {
+            let cx = [0, 1];
+            let cy = [0, 1];
+            for(let iter=0; iter<6; iter++) {
+                let nx = [], ny = [];
+                for(let i=0; i<cx.length-1; i++) {
+                    let x1 = cx[i], x2 = cx[i+1];
+                    let y1 = cy[i], y2 = cy[i+1];
+                    if (y1 === y2) { 
+                        nx.push(x1); ny.push(y1);
+                    } else {
+                        let d = (x2 - x1) / 3;
+                        let midY = (y1 + y2) / 2;
+                        nx.push(x1); ny.push(y1);
+                        nx.push(x1 + d); ny.push(midY);
+                        nx.push(x2 - d); ny.push(midY);
+                    }
+                }
+                nx.push(cx[cx.length-1]); ny.push(cy[cy.length-1]);
+                cx = nx; cy = ny;
+            }
+            
+            let c_shifted = cy.map(y => 2 * y - 1);
+            let c_int = [0];
+            for(let i=1; i<cx.length; i++) {
+                let dx = cx[i] - cx[i-1];
+                let avgY = (c_shifted[i] + c_shifted[i-1])/2;
+                c_int.push(c_int[i-1] + dx * avgY);
+            }
+            
+            Plotly.newPlot('plotly-cantor', [
+                { x: cx, y: c_shifted, name: 'Shifted Cantor', line: {color: '#e11d48', shape: 'linear'} },
+                { x: cx, y: c_int, name: 'Integrated Cantor', line: {color: '#3b82f6', shape: 'linear'} }
+            ], {
+                margin: {l:40, r:20, b:40, t:20},
+                legend: {orientation: 'h', y: 1.1},
+                xaxis: {title: 'x'}, yaxis: {title: 'y'}
+            }, {responsive: true});
+
+            let sx = [], sy = [];
+            let cur = {x: 0, y: 0};
+            let corners = [{x: 0, y: 0}, {x: 1, y: 0}, {x: 0.5, y: Math.sqrt(3)/2}];
+            for(let i=0; i<15000; i++) {
+                let c = corners[Math.floor(Math.random() * 3)];
+                cur.x = (cur.x + c.x) / 2;
+                cur.y = (cur.y + c.y) / 2;
+                if(i > 10) {
+                    sx.push(cur.x); sy.push(cur.y);
+                }
+            }
+            Plotly.newPlot('plotly-sierpinski', [
+                { x: sx, y: sy, mode: 'markers', marker: {size: 1.5, color: '#0ea5e9'}, type: 'scatter' }
+            ], {
+                margin: {l:20, r:20, b:20, t:20},
+                xaxis: {visible: false}, yaxis: {visible: false, scaleanchor: 'x', scaleratio: 1},
+                showlegend: false
+            }, {responsive: true});
+        }
+
+        function renderCornerBody() {
+            let x = [], y = [], z = [];
+            let steps = 60;
+            for (let i = 0; i <= steps; i++) { 
+                x.push(-1.5 + (3.0 * i / steps)); 
+                y.push(-1.5 + (3.0 * i / steps)); 
+            }
+            for (let j = 0; j <= steps; j++) {
+                let row = [];
+                for (let i = 0; i <= steps; i++) {
+                    row.push(Math.max(Math.sqrt(x[i]*x[i] + y[j]*y[j]), Math.SQRT2 * Math.abs(x[i])));
+                }
+                z.push(row);
+            }
+
+            let traces = [{
+                x: x, y: y, z: z,
+                type: 'surface', colorscale: 'Viridis', opacity: 0.85, showscale: false
+            }];
+
+            let p_sm = [0.5, 1.0, Math.sqrt(5)/2];
+            let n_sm = [p_sm[0]/p_sm[2], p_sm[1]/p_sm[2], -1.0];
+            let n_sm_len = Math.sqrt(n_sm[0]**2 + n_sm[1]**2 + n_sm[2]**2);
+            let r_sm = [p_sm[0] + (n_sm[0]/n_sm_len)*0.8, p_sm[1] + (n_sm[1]/n_sm_len)*0.8, p_sm[2] + (n_sm[2]/n_sm_len)*0.8];
+            traces.push({
+                x: [p_sm[0], r_sm[0]], y: [p_sm[1], r_sm[1]], z: [p_sm[2], r_sm[2]],
+                mode: 'lines+markers', line: {color: 'blue', width: 2}, marker: {size: 2, color: 'blue'}, type: 'scatter3d', name: '1D Normal'
+            });
+
+            let p_cr = [1.0, 1.0, Math.SQRT2];
+            let ray1 = [1/Math.SQRT2, 1/Math.SQRT2, -1];
+            let ray2 = [Math.SQRT2, 0, -1];
+            let r1_len = Math.sqrt(ray1[0]**2 + ray1[1]**2 + ray1[2]**2);
+            let r2_len = Math.sqrt(ray2[0]**2 + ray2[1]**2 + ray2[2]**2);
+            let r1_end = [p_cr[0] + (ray1[0]/r1_len)*0.8, p_cr[1] + (ray1[1]/r1_len)*0.8, p_cr[2] + (ray1[2]/r1_len)*0.8];
+            let r2_end = [p_cr[0] + (ray2[0]/r2_len)*0.8, p_cr[1] + (ray2[1]/r2_len)*0.8, p_cr[2] + (ray2[2]/r2_len)*0.8];
+            traces.push({
+                x: [p_cr[0], r1_end[0], r2_end[0]], y: [p_cr[1], r1_end[1], r2_end[1]], z: [p_cr[2], r1_end[2], r2_end[2]],
+                i: [0], j: [1], k: [2], type: 'mesh3d', color: 'red', opacity: 0.5, name: '2D Normal'
+            });
+            traces.push({
+                x: [p_cr[0], r1_end[0], null, p_cr[0], r2_end[0]], y: [p_cr[1], r1_end[1], null, p_cr[1], r2_end[1]], z: [p_cr[2], r1_end[2], null, p_cr[2], r2_end[2]],
+                mode: 'lines', line: {color: 'darkred', width: 3}, type: 'scatter3d', showlegend: false
+            });
+
+            let cone_x = [0], cone_y = [0], cone_z = [0];
+            let csteps = 32;
+            for(let i=0; i<=csteps; i++) {
+                let theta = 2 * Math.PI * i / csteps;
+                let vx, vy, vz = -1.0;
+                if(Math.abs(Math.cos(theta)) >= Math.abs(Math.sin(theta))) {
+                    vx = Math.SQRT2 * Math.sign(Math.cos(theta)); vy = 0;
+                } else {
+                    vx = Math.cos(theta); vy = Math.sin(theta);
+                }
+                let vlen = Math.sqrt(vx**2 + vy**2 + vz**2);
+                cone_x.push((vx/vlen)*0.7); cone_y.push((vy/vlen)*0.7); cone_z.push((vz/vlen)*0.7);
+            }
+            let ci = [], cj = [], ck = [];
+            for(let i=1; i<=csteps; i++) { ci.push(0); cj.push(i); ck.push(i+1); }
+            traces.push({
+                x: cone_x, y: cone_y, z: cone_z,
+                i: ci, j: cj, k: ck, type: 'mesh3d', color: 'purple', opacity: 0.6, name: '3D Normal'
+            });
+
+            Plotly.newPlot('plotly-corner-body', traces, {
+                margin: {l:0, r:0, b:0, t:0},
+                scene: { aspectmode: 'data', camera: {eye: {x: 1.2, y: 1.5, z: 0.8}} },
+                showlegend: false
+            }, {responsive: true});
+        }
+
+        function renderSingularBody() {
+            let alpha = 0.5;
+            let x = [], y = [], z = [];
+            let steps = 60;
+            for (let i = 0; i <= steps; i++) { 
+                x.push(-1.5 + (3.0 * i / steps)); 
+                y.push(-1.5 + (3.0 * i / steps)); 
+            }
+            for (let j = 0; j <= steps; j++) {
+                let row = [];
+                for (let i = 0; i <= steps; i++) {
+                    row.push(Math.sqrt(y[j]*y[j] + Math.pow(Math.max(Math.abs(x[i]) - alpha, 0), 4)));
+                }
+                z.push(row);
+            }
+
+            let traces = [{
+                x: x, y: y, z: z, type: 'surface', colorscale: 'Viridis', opacity: 0.85, showscale: false
+            }];
+
+            traces.push({
+                x: [-alpha, alpha], y: [0, 0], z: [0, 0],
+                mode: 'lines', line: {color: 'red', width: 3}, type: 'scatter3d', name: 'Singular Line'
+            });
+
+            let pt1 = [0.0, 0.8, 0.8];
+            let n1_end = [0.0, 0.8 + 0.6, 0.8 - 0.6];
+            traces.push({
+                x: [pt1[0], n1_end[0]], y: [pt1[1], n1_end[1]], z: [pt1[2], n1_end[2]],
+                mode: 'lines+markers', line: {color: 'blue', width: 3}, marker: {size: 3, color: 'blue'}, type: 'scatter3d'
+            });
+
+            traces.push({
+                x: [0, 0, 0], y: [0, 0.8, -0.8], z: [0, -0.8, -0.8],
+                i: [0], j: [1], k: [2], type: 'mesh3d', color: 'darkred', opacity: 0.5
+            });
+
+            let x3 = 0.85, y3 = 0.1;
+            let z3 = Math.sqrt(y3**2 + Math.pow(Math.max(Math.abs(x3) - alpha, 0), 4));
+            let df_dx = 0, df_dy = 0;
+            if (Math.abs(x3) <= alpha) {
+                df_dx = 0; df_dy = Math.sign(y3);
+            } else {
+                let denom = Math.sqrt(y3**2 + Math.pow(Math.abs(x3) - alpha, 4));
+                df_dx = (2.0 * Math.pow(Math.abs(x3) - alpha, 3) * Math.sign(x3)) / denom;
+                df_dy = y3 / denom;
+            }
+            let n3_len = Math.sqrt(df_dx**2 + df_dy**2 + 1);
+            let n3_end = [x3 + (df_dx/n3_len)*0.85, y3 + (df_dy/n3_len)*0.85, z3 + (-1/n3_len)*0.85];
+
+            traces.push({
+                x: [x3, n3_end[0]], y: [y3, n3_end[1]], z: [z3, n3_end[2]],
+                mode: 'lines+markers', line: {color: 'purple', width: 3}, marker: {size: 3, color: 'purple'}, type: 'scatter3d'
+            });
+
+            Plotly.newPlot('plotly-singular-body', traces, {
+                margin: {l:0, r:0, b:0, t:0},
+                scene: { aspectmode: 'data', camera: {eye: {x: 1.2, y: 1.5, z: 0.8}},
+                         xaxis: {title: 'x'}, yaxis: {title: 'y'}, zaxis: {title: 'z'} },
+                showlegend: false
+            }, {responsive: true});
+        }
+
+        function renderGeneral3DHull() {
+            let n = 80000;
+            // Use TypedArrays for massive performance boost and memory safety
+            let S = new Float64Array(n + 1);
+            let X1 = new Float64Array(n + 1);
+            let X2 = new Float64Array(n + 1);
+            
+            S[0] = 0; X1[0] = 0; X2[0] = 0;
+            let alpha = 1.8;
+            
+            let minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+            
+            for(let i=0; i<n; i++) {
+                let R = Math.pow(Math.random(), -1.0/alpha) * 0.05;
+                let theta = Math.random() * 2 * Math.PI;
+                let phi = Math.random() * Math.PI;
+                let dx = R * Math.sin(phi) * Math.cos(theta);
+                let dy = R * Math.sin(phi) * Math.sin(theta);
+                let dz = R * Math.cos(phi);
+                
+                S[i+1] = S[i] + dx;
+                X1[i+1] = X1[i] + dy;
+                X2[i+1] = X2[i] + dz;
+
+                if (S[i+1] < minX) minX = S[i+1]; if (S[i+1] > maxX) maxX = S[i+1];
+                if (X1[i+1] < minY) minY = X1[i+1]; if (X1[i+1] > maxY) maxY = X1[i+1];
+                if (X2[i+1] < minZ) minZ = X2[i+1]; if (X2[i+1] > maxZ) maxZ = X2[i+1];
+            }
+
+            let maxSpan = Math.max(maxX - minX, maxY - minY, maxZ - minZ) || 1;
+
+            // Exhaustive directional search for extreme points using a dense spherical cover
+            let c_set = new Set([0, n]);
+            let num_dirs = 5000;
+            let phi = Math.PI * (3 - Math.sqrt(5));
+            for(let i=0; i<num_dirs; i++){
+                let y = 1 - (i / (num_dirs - 1)) * 2;
+                let radius = Math.sqrt(1 - y*y);
+                let theta = phi * i;
+                let dx = Math.cos(theta)*radius, dy = y, dz = Math.sin(theta)*radius;
+                
+                let max_d = -Infinity, max_i = 0;
+                let min_d = Infinity, min_i = 0;
+                for(let j=0; j<=n; j++) {
+                    let d = S[j]*dx + X1[j]*dy + X2[j]*dz;
+                    if(d > max_d) { max_d = d; max_i = j; }
+                    if(d < min_d) { min_d = d; min_i = j; }
+                }
+                c_set.add(max_i);
+                c_set.add(min_i);
+            }
+            
+            // Extreme points representing the convex hull boundary
+            let E = Array.from(c_set).map(idx => ({x: S[idx], y: X1[idx], z: X2[idx]}));
+            let n_e = E.length;
+            
+            let edge_x = [], edge_y = [], edge_z = [];
+            let tol2 = 1e-10 * maxSpan * maxSpan;
+
+            // Exhaustive edge validation natively in JS using 2D convex projection logic
+            for (let i = 0; i < n_e; i++) {
+                for (let j = i + 1; j < n_e; j++) {
+                    let dx = E[j].x - E[i].x;
+                    let dy = E[j].y - E[i].y;
+                    let dz = E[j].z - E[i].z;
+                    let len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    if (len < 1e-7 * maxSpan) continue;
+
+                    let ux = dx/len, uy = dy/len, uz = dz/len;
+
+                    // Form an orthogonal basis spanning the normal plane
+                    let wx = 1, wy = 0, wz = 0;
+                    if (Math.abs(ux) > 0.9) { wx = 0; wy = 1; }
+
+                    let xx = wy*uz - wz*uy;
+                    let xy = wz*ux - wx*uz;
+                    let xz = wx*uy - wy*ux;
+                    let xlen = Math.sqrt(xx*xx + xy*xy + xz*xz);
+                    xx /= xlen; xy /= xlen; xz /= xlen;
+
+                    let yx = uy*xz - uz*xy;
+                    let yy = uz*xx - ux*xz;
+                    let yz = ux*xy - uy*xx;
+
+                    let angles = [];
+                    for (let m = 0; m < n_e; m++) {
+                        if (m === i || m === j) continue;
+                        let mx = E[m].x - E[i].x;
+                        let my = E[m].y - E[i].y;
+                        let mz = E[m].z - E[i].z;
+
+                        let px = mx*xx + my*xy + mz*xz;
+                        let py = mx*yx + my*yy + mz*yz;
+
+                        // Only consider points strictly non-collinear with the candidate edge
+                        if (px*px + py*py > tol2) {
+                            angles.push(Math.atan2(py, px));
+                        }
+                    }
+
+                    if (angles.length === 0) {
+                        edge_x.push(E[i].x, E[j].x, null);
+                        edge_y.push(E[i].y, E[j].y, null);
+                        edge_z.push(E[i].z, E[j].z, null);
+                        continue;
+                    }
+
+                    angles.sort((a,b) => a - b);
+                    let max_gap = angles[0] + 2*Math.PI - angles[angles.length - 1];
+                    for (let m = 0; m < angles.length - 1; m++) {
+                        let gap = angles[m+1] - angles[m];
+                        if (gap > max_gap) max_gap = gap;
+                    }
+
+                    // For (E[i], E[j]) to be a bounding edge, the 2D projection of all other points 
+                    // onto the normal plane MUST lie strictly within a half-plane
+                    // This means the maximum angular gap must be >= Pi
+                    if (max_gap >= Math.PI - 1e-5) {
+                        edge_x.push(E[i].x, E[j].x, null);
+                        edge_y.push(E[i].y, E[j].y, null);
+                        edge_z.push(E[i].z, E[j].z, null);
+                    }
+                }
+            }
+            
+            let traces = [
+                {
+                    x: Array.from(S), y: Array.from(X1), z: Array.from(X2),
+                    mode: 'lines+markers',
+                    marker: {size: 1, color: 'rgba(100, 116, 139, 0.8)'},
+                    line: {color: 'rgba(100, 116, 139, 0.4)', width: 1},
+                    type: 'scatter3d',
+                    name: 'Path X_t'
+                },
+                {
+                    x: E.map(p=>p.x), y: E.map(p=>p.y), z: E.map(p=>p.z),
+                    alphahull: 0,
+                    opacity: 0.15, 
+                    color: '#0ea5e9',
+                    type: 'mesh3d',
+                    flatshading: true,
+                    lighting: {facenormalsepsilon: 0, ambient: 0.8},
+                    name: 'Convex Hull'
+                },
+                {
+                    x: edge_x, y: edge_y, z: edge_z,
+                    mode: 'lines',
+                    line: {color: '#000000', width: 1.5}, 
+                    type: 'scatter3d',
+                    name: 'Hull Edges',
+                    hoverinfo: 'none'
+                }
+            ];
+            
+            Plotly.newPlot('plotly-general-3d-hull', traces, {
+                margin: {l:0, r:0, b:0, t:0},
+                scene: {
+                    xaxis: {title: 'X'}, yaxis: {title: 'Y'}, zaxis: {title: 'Z'},
+                    camera: {eye: {x: 1.5, y: 1.5, z: 1.2}}
+                },
+                showlegend: false
+            }, {responsive: true});
+        }
+	
+	function drawGeoSep() {
+            const t1x = parseFloat(document.getElementById('geo_t1x').value) || 0;
+            const t1y = parseFloat(document.getElementById('geo_t1y').value) || 0;
+            const t1z = parseFloat(document.getElementById('geo_t1z').value) || 0;
+
+            const t2x = parseFloat(document.getElementById('geo_t2x').value) || 0;
+            const t2y = parseFloat(document.getElementById('geo_t2y').value) || 0;
+            const t2z = parseFloat(document.getElementById('geo_t2z').value) || 0;
+
+            const l1 = 1;
+            const l2 = parseFloat(document.getElementById('geo_l2').value) || 1;
+
+            document.getElementById('geo_l2_val').innerText = l2.toFixed(2);
+
+            const th = [0, 0, 1];
+            const t1 = [t1x, t1y, t1z];
+            const t2 = [t2x, t2y, t2z];
+            const tp = [l1*t1x + l2*t2x, l1*t1y + l2*t2y, l1*t1z + l2*t2z];
+
+            const nt1 = [-t1x, -t1y, -t1z];
+            const nt2 = [-t2x, -t2y, -t2z];
+            const ntp = [-tp[0], -tp[1], -tp[2]];
+
+            const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+            const cross = (a, b) => [
+                a[1]*b[2] - a[2]*b[1],
+                a[2]*b[0] - a[0]*b[2],
+                a[0]*b[1] - a[1]*b[0]
+            ];
+            const normalize = (a) => { let l=Math.sqrt(dot(a,a))||1; return [a[0]/l, a[1]/l, a[2]/l]; };
+
+            // Green Wedge: Intersection of L_{-t1} and L_{-t2}
+            let gx=[], gy=[], gz=[];
+            gx.push(0); gy.push(0); gz.push(0); 
+            let phi = Math.PI * (3 - Math.sqrt(5));
+            for(let i=0; i<3000; i++){
+                let y = 1 - (i / 2999) * 2;
+                let r = Math.sqrt(1 - y*y);
+                let theta = phi * i;
+                let p = [Math.cos(theta)*r * 1.5, y * 1.5, Math.sin(theta)*r * 1.5];
+                if(dot(p, nt1) >= 0 && dot(p, nt2) >= 0) {
+                    gx.push(p[0]); gy.push(p[1]); gz.push(p[2]);
+                }
+            }
+
+            let traces = [];
+
+            if (gx.length > 4) {
+                traces.push({
+                    type: 'mesh3d',
+                    x: gx, y: gy, z: gz,
+                    alphahull: 0,
+                    opacity: 0.3,
+                    color: '#22c55e', 
+                    name: 'L_{-θ₁} ∩ L_{-θ₂}'
+                });
+            }
+
+            // Normal plane to theta (Z=0)
+            traces.push({
+                type: 'mesh3d',
+                x: [-2, 2, 2, -2],
+                y: [-2, -2, 2, 2],
+                z: [0, 0, 0, 0],
+                i: [0, 0], j: [1, 2], k: [2, 3],
+                opacity: 0.15,
+                color: '#94a3b8',
+                name: 'Normal plane to θ (Z=0)'
+            });
+
+            // Bounding plane of L_{-tp} (pink)
+            let unp = normalize(ntp);
+            let u = [1, 0, 0];
+            if(Math.abs(unp[0]) > 0.9) u = [0, 1, 0];
+            let v1_vec = normalize(cross(unp, u));
+            let v2_vec = normalize(cross(unp, v1_vec));
+            let ps = 2.5;
+            traces.push({
+                type: 'mesh3d',
+                x: [ps*(v1_vec[0]+v2_vec[0]), ps*(v1_vec[0]-v2_vec[0]), ps*(-v1_vec[0]-v2_vec[0]), ps*(-v1_vec[0]+v2_vec[0])],
+                y: [ps*(v1_vec[1]+v2_vec[1]), ps*(v1_vec[1]-v2_vec[1]), ps*(-v1_vec[1]-v2_vec[1]), ps*(-v1_vec[1]+v2_vec[1])],
+                z: [ps*(v1_vec[2]+v2_vec[2]), ps*(v1_vec[2]-v2_vec[2]), ps*(-v1_vec[2]-v2_vec[2]), ps*(-v1_vec[2]+v2_vec[2])],
+                i: [0, 0], j: [1, 2], k: [2, 3],
+                opacity: 0.3,
+                color: '#f43f5e', 
+                name: "L_{-θ'} Boundary"
+            });
+
+            const addVec = (v, color, name) => {
+                let nv = normalize(v).map(val=>val*1.5);
+                traces.push({
+                    type: 'scatter3d',
+                    mode: 'lines+text',
+                    x: [0, nv[0]], y: [0, nv[1]], z: [0, nv[2]],
+                    line: {color: color, width: 6},
+                    text: ['', name],
+                    textposition: 'top center',
+                    textfont: {color: color, size: 16, weight: 'bold'},
+                    showlegend: false
+                });
+            };
+
+            addVec(th, '#0f172a', 'θ');
+            addVec(nt1, '#0284c7', '-θ₁');
+            addVec(nt2, '#0284c7', '-θ₂');
+            addVec(ntp, '#e11d48', "-θ'");
+
+            let currentCamera = {eye: {x: 1.5, y: 1.5, z: 1.5}};
+            const plotDiv = document.getElementById('geoSepPlotly');
+            if (plotDiv && plotDiv.layout && plotDiv.layout.scene && plotDiv.layout.scene.camera) {
+                currentCamera = plotDiv.layout.scene.camera;
+            }
+
+            Plotly.react('geoSepPlotly', traces, {
+                margin: {l:0, r:0, b:0, t:0},
+                scene: {
+                    xaxis: {range: [-2.5, 2.5], visible: false},
+                    yaxis: {range: [-2.5, 2.5], visible: false},
+                    zaxis: {range: [-2.5, 2.5], visible: false},
+                    camera: currentCamera
+                },
+                uirevision: 'constant',
+                showlegend: false
+            }, {responsive: true});
+        }
+    </script>
+</body></html>
