@@ -206,12 +206,103 @@
 </div>
 </div>
 </div>
+</section>
+
+<section class="mb-16">
+  <div class="mb-8">
+    <h2 class="text-3xl font-bold text-slate-900 serif mb-4">
+      Smoothness via slopes of the convex minorant
+    </h2>
+
+    <p class="text-lg text-slate-700 leading-relaxed">
+      Let \(X\) be a one-dimensional Lévy process and let
+      \(\mathcal{S}\) denote the set of slopes of its convex minorant.
+    </p>
+  </div>
+
+  <!-- Theorem: Local smoothness -->
+  <div class="mb-8 rounded-xl border border-slate-300 bg-slate-50 p-6 shadow-sm">
+    <div class="mb-4 flex items-baseline gap-3">
+      <span class="text-xl font-bold text-slate-900 serif">
+        Theorem
+      </span>
+      <span class="text-base text-slate-600">
+        Bang, González Cázares and Mijatović
+      </span>
+    </div>
+
+    <p class="text-lg text-slate-800 leading-relaxed">
+      For any measurable set \(I\subseteq\mathbb{R}\), the set
+      \(\mathcal{S}\cap I\) is either almost surely finite or almost surely
+      infinite.
+    </p>
+
+    <p class="mt-4 text-lg text-slate-800 leading-relaxed">
+      Moreover, the cardinality
+      \[
+        \lvert\mathcal{S}\cap I\rvert
+      \]
+      is infinite almost surely if and only if
+    </p>
+
+    <div class="my-5 overflow-x-auto text-lg">
+      \[
+        \int_0^1
+        \mathbb{P}\!\left(\frac{X_t}{t}\in I\right)
+        \frac{\mathrm{d}t}{t}
+        =\infty.
+        \tag{1}
+      \]
+    </div>
+  </div>
+
+  <!-- Corollary -->
+  <div class="mb-8 rounded-xl border-l-4 border-slate-500 bg-white p-6 shadow-sm">
+    <div class="mb-3 text-xl font-bold text-slate-900 serif">
+      Corollary
+    </div>
+
+    <p class="text-lg text-slate-800 leading-relaxed">
+      The limit set
+      \[
+        \mathcal{L}(\mathcal{S})
+      \]
+      is deterministic almost surely.
+    </p>
+  </div>
+
+  <!-- Theorem: Global smoothness -->
+  <div class="rounded-xl border border-slate-300 bg-slate-50 p-6 shadow-sm">
+    <div class="mb-4 text-xl font-bold text-slate-900 serif">
+      Theorem
+    </div>
+
+    <p class="text-lg text-slate-800 leading-relaxed">
+      The boundary of the convex hull of the graph
+      \[
+        t\longmapsto (t,X_t),\qquad t\in[0,T],
+      \]
+      of a path of any Lévy process \(X\) is continuously differentiable,
+      as a closed curve in \(\mathbb{R}^2\), almost surely if and only if
+      condition \((1)\) holds for every interval \(I\subseteq\mathbb{R}\).
+    </p>
+
+    <p class="mt-4 text-lg text-slate-800 leading-relaxed">
+      Moreover, this is equivalent to the set
+      \[
+        \mathcal{S}
+      \]
+      being dense in \(\mathbb{R}\) almost surely.
+    </p>
+  </div>
+</section>
+
 
 <figure style="max-width: 950px; margin: 2rem auto; text-align: center;">
   <img
     src="./levy_path_convex_minorant_majorant.png"
     alt="Lévy path with convex minorant and concave majorant"
-    style="display: block; width: 50%; height: auto; margin: 0 auto;"
+    style="display: block; width: 70%; height: auto; margin: 0 auto;"
   >
 </figure>
 
@@ -220,7 +311,7 @@
   </figcaption>
 </figure>
 	
-</section>
+
 <section class="mb-24 scroll-mt-24" id="geometry">
 <div class="mb-8">
 <span class="text-teal-600 font-bold tracking-wider uppercase text-sm">Part 2</span>
